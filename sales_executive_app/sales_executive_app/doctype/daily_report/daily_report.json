@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "DR-.YYYY.-.#####",
+ "creation": "2026-10-23 12:30:57.566423",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "report_date",
+  "clock_in",
+  "clock_out",
+  "shops_visited",
+  "total_order_qty",
+  "km_travelled",
+  "first_visit_time",
+  "last_visit_time",
+  "working_hours"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "report_date",
+   "fieldtype": "Date",
+   "label": "Report Date"
+  },
+  {
+   "fieldname": "clock_in",
+   "fieldtype": "Datetime",
+   "label": "Clock In"
+  },
+  {
+   "fieldname": "clock_out",
+   "fieldtype": "Datetime",
+   "label": "Clock Out"
+  },
+  {
+   "fieldname": "shops_visited",
+   "fieldtype": "Int",
+   "label": "Shops VisitedTotal Order Qty"
+  },
+  {
+   "fieldname": "total_order_qty",
+   "fieldtype": "Float",
+   "label": "Total Order Qty"
+  },
+  {
+   "fieldname": "km_travelled",
+   "fieldtype": "Float",
+   "label": "KM Travelled"
+  },
+  {
+   "fieldname": "first_visit_time",
+   "fieldtype": "Datetime",
+   "label": "First Visit Time"
+  },
+  {
+   "fieldname": "last_visit_time",
+   "fieldtype": "Datetime",
+   "label": "Last Visit Time"
+  },
+  {
+   "fieldname": "working_hours",
+   "fieldtype": "Float",
+   "label": "Working Hours"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-27 11:25:14.660507",
+ "modified_by": "Administrator",
+ "module": "Sales Executive App",
+ "name": "Daily Report",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

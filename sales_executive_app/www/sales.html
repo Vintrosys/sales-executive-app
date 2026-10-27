@@ -1,0 +1,2639 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1e3a8a">
+  <title>Salesperson App · Field Executive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    window.frappe = window.frappe || {};
+    frappe.csrf_token = "{{ csrf_token or '' }}";
+    window.CURRENT_USER = "{{ user or '' }}";
+  </script>
+
+  {% raw %}
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1e3a8a;
+      --primary-light: #eff6ff;
+      --primary-border: #bfdbfe;
+      --primary-grad: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
+      --success: #10b981;
+      --success-dark: #047857;
+      --success-light: #d1fae5;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --bg-app: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --border: #e2e8f0;
+      --border-focus: #3b82f6;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: var(--bg-app);
+      color: var(--text-main);
+      padding-bottom: calc(82px + env(safe-area-inset-bottom));
+      min-height: 100vh;
+    }
+
+    /* App Header */
+    header.app-header {
+      background: var(--primary-grad);
+      color: #fff;
+      padding: 14px 18px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .header-title-wrap h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-sub {
+      font-size: 12px;
+      opacity: 0.88;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pulse-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #cbd5e1;
+    }
+
+    .dot.live {
+      background: #22c55e;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      }
+
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+      }
+
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+      }
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 10px;
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Main Container */
+    #main-view {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card-hero {
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+      border: 1px solid #cbd5e1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-grad);
+    }
+
+    .card-title {
+      margin: 0 0 6px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-sub {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.4;
+      margin: 0 0 12px;
+    }
+
+    /* Stat Grid */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 10px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stat-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .stat-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    /* Duty Banner */
+    .duty-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+
+    .duty-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .duty-pill {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .duty-pill.on {
+      background: var(--success-light);
+      color: var(--success-dark);
+    }
+
+    .duty-pill.out {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    /* Buttons */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      background: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.green {
+      background: var(--success);
+      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn.green:hover {
+      background: var(--success-dark);
+    }
+
+    .btn.red {
+      background: var(--danger);
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+    }
+
+    .btn.red:hover {
+      background: #dc2626;
+    }
+
+    .btn.grey {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
+    .btn.grey:hover {
+      background: #e2e8f0;
+    }
+
+    .btn.outline {
+      background: transparent;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      box-shadow: none;
+    }
+
+    .btn.outline:hover {
+      background: var(--primary-light);
+    }
+
+    .btn.small {
+      width: auto;
+      display: inline-flex;
+      padding: 8px 14px;
+      font-size: 13px;
+      border-radius: 999px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-row>.btn {
+      flex: 1;
+    }
+
+    /* Inputs & Form Elements */
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 6px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text-main);
+      background: #ffffff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .search-box {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .search-box input {
+      padding-left: 40px;
+      background: #ffffff;
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+    }
+
+    /* List Items */
+    .list-item {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .list-item:hover {
+      border-color: #cbd5e1;
+      box-shadow: var(--shadow-sm);
+      transform: translateY(-1px);
+    }
+
+    .list-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .item-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0;
+    }
+
+    .item-subtitle {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    .badge.ok {
+      background: var(--success-light);
+      color: var(--success-dark);
+    }
+
+    .badge.far {
+      background: var(--danger-light);
+      color: #991b1b;
+    }
+
+    .badge.warn {
+      background: var(--warning-light);
+      color: #92400e;
+    }
+
+    .badge.primary {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* Bottom Nav */
+    nav#bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      display: flex;
+      border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 50;
+      box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.05);
+    }
+
+    .nav-tab {
+      flex: 1;
+      border: 0;
+      background: none;
+      padding: 10px 0 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-tab svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2;
+    }
+
+    .nav-tab.active {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    .nav-tab.active svg {
+      stroke: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    /* OpenStreetMap View Styles */
+    #leaflet-map {
+      width: 100%;
+      height: 480px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      z-index: 10;
+      margin-top: 10px;
+    }
+
+    .map-filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .map-pill {
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .map-pill.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .map-custom-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      border: 2px solid #ffffff;
+    }
+
+    .marker-green {
+      background: #10b981;
+    }
+
+    .marker-grey {
+      background: #64748b;
+    }
+
+    .marker-orange {
+      background: #f59e0b;
+    }
+
+    .marker-red {
+      background: #ef4444;
+    }
+
+    .marker-blue {
+      background: #2563eb;
+    }
+
+    /* Photo Capture Preview */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 12px 0;
+    }
+
+    .photo-slot {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      position: relative;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-slot img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-top: 6px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .photo-slot.has-img {
+      border: 1px solid var(--border);
+      background: #ffffff;
+    }
+
+    /* Order Cart */
+    .cart-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      gap: 10px;
+    }
+
+    .qty-stepper {
+      display: flex;
+      align-items: center;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .qty-btn {
+      background: #f8fafc;
+      border: 0;
+      width: 32px;
+      height: 32px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qty-input {
+      width: 44px;
+      text-align: center;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 90;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      width: 100%;
+      max-width: 600px;
+      max-height: 88vh;
+      border-radius: 20px 20px 0 0;
+      padding: 20px 18px calc(24px + env(safe-area-inset-bottom));
+      overflow-y: auto;
+      box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.15);
+      animation: slideUp 0.25s ease;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .modal-close {
+      background: #f1f5f9;
+      border: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+      }
+
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      left: 20px;
+      right: 20px;
+      bottom: calc(90px + env(safe-area-inset-bottom));
+      max-width: 440px;
+      margin: 0 auto;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 13px 18px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      display: none;
+      z-index: 100;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: slideUp 0.2s ease;
+    }
+
+    /* Busy overlay */
+    #busy {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(3px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 110;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3.5px solid #cbd5e1;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Empty state */
+    .empty-box {
+      text-align: center;
+      padding: 30px 16px;
+      color: var(--text-muted);
+    }
+
+    .empty-box svg {
+      margin-bottom: 8px;
+      color: #cbd5e1;
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: #fff;
+        padding-bottom: 0;
+      }
+
+      header.app-header,
+      nav#bottom-nav,
+      .no-print,
+      .btn,
+      .icon-btn {
+        display: none !important;
+      }
+
+      #main-view {
+        max-width: 100%;
+        padding: 0;
+      }
+
+      .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        break-inside: avoid;
+      }
+    }
+  </style>
+  {% endraw %}
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-row">
+      <div class="header-title-wrap">
+        <h1>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          Sales Executive
+        </h1>
+        <div class="header-sub" id="header-user-date">Loading...</div>
+      </div>
+      <div class="header-actions">
+        <span class="pulse-badge" id="gps-status-badge" onclick="toggleOrCheckGps()" title="GPS Status (Tap to verify)"
+          style="cursor:pointer">
+          <span class="dot live" id="gps-dot"></span>
+          <span id="gps-text">GPS LIVE</span>
+        </span>
+        <button class="icon-btn no-print" onclick="doLogout()" title="Logout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main App Content -->
+  <main id="main-view">
+    <div class="card">
+      <div class="empty-box">
+        <div class="spinner"></div>
+        <p>Connecting...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation Bar (Matches user request: Day, Visit, Customers, Report) -->
+  <nav id="bottom-nav" style="display:none">
+    <button class="nav-tab active" id="tab-day" onclick="navigate('day')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+      <span>Day</span>
+    </button>
+    <button class="nav-tab" id="tab-visit" onclick="navigate('visit')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+      <span>Visit</span>
+    </button>
+    <button class="nav-tab" id="tab-cust" onclick="navigate('cust')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+      <span>Customers</span>
+    </button>
+    <button class="nav-tab" id="tab-report" onclick="navigate('report')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
+      </svg>
+      <span>Report</span>
+    </button>
+    <button class="nav-tab" id="tab-map" onclick="navigate('map')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+        <line x1="8" y1="2" x2="8" y2="18" />
+        <line x1="16" y1="6" x2="16" y2="22" />
+      </svg>
+      <span>Map</span>
+    </button>
+  </nav>
+
+  <!-- Modals -->
+  <div class="modal-backdrop" id="add-cust-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Add New Customer</h3>
+        <button class="modal-close" onclick="closeModal('add-cust-modal')">&times;</button>
+      </div>
+      <form id="new-cust-form" onsubmit="handleSaveCustomer(event)">
+        <div class="form-group">
+          <label class="form-label">Shop Name *</label>
+          <input id="nc-shop-name" placeholder="E.g. Sri Lakshmi Stores / Vinayaka Tex" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Customer / Billing Entity Name</label>
+          <input id="nc-name" placeholder="E.g. Sri Lakshmi Enterprises (leave blank to use Shop Name)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact Person</label>
+          <input id="nc-contact" placeholder="Owner, Manager or Cashier Name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mobile Number</label>
+          <input id="nc-mobile" type="tel" placeholder="10-digit mobile number">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Shop Address</label>
+          <textarea id="nc-addr" rows="2" placeholder="Street, Area, City, Pincode"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Territory</label>
+          <select id="nc-territory"></select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Shop GPS Location</label>
+          <div class="btn-row">
+            <button type="button" class="btn grey small" onclick="captureCustomerGPS()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+              </svg>
+              Current GPS
+            </button>
+            <span id="nc-gps-txt" class="item-subtitle" style="margin:0">Not captured yet</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Remarks / Description</label>
+          <input id="nc-desc" placeholder="Notes about shop, timings, etc.">
+        </div>
+        <button type="submit" class="btn green" style="margin-top:16px">Save Customer</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast & Busy -->
+  <div id="toast"></div>
+  <div id="busy">
+    <div class="spinner"></div>
+    <span id="busy-text">Please wait...</span>
+  </div>
+
+  {% raw %}
+  <script>
+    // State Management
+    const API = '/api/method/sales_executive_app.api.';
+    const S = {
+      tab: 'day',
+      user: null,
+      status: null,
+      shops: [],
+      selectedShop: null,
+      activeVisit: null,
+      photos: { selfie: null, shop: null },
+      cart: [],
+      meta: { customer_groups: [], territories: [] },
+      reportDate: null,
+      lastPos: null,
+    };
+
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const hm = s => s ? String(s).slice(11, 16) : '';
+    const fmtDate = d => {
+      try {
+        const dt = new Date(d);
+        return dt.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      } catch (e) { return d; }
+    };
+
+    // URL test location override or automatic dev fallback for insecure contexts (poomer / IP)
+    const TEST = (() => {
+      const m = new URLSearchParams(location.search).get('testloc');
+      if (m) {
+        const p = m.split(',').map(Number);
+        return { lat: p[0], lng: p[1] };
+      }
+      if (window.isSecureContext === false && !location.hostname.includes('localhost') && location.hostname !== '127.0.0.1') {
+        return { lat: 11.0168, lng: 76.9558 };
+      }
+      return null;
+    })();
+
+    function toast(msg) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => { t.style.display = 'none'; }, 3600);
+    }
+
+    async function run(label, fn) {
+      $('busy-text').textContent = label;
+      $('busy').style.display = 'flex';
+      try { return await fn(); }
+      catch (e) { toast(e.message || 'Something went wrong'); }
+      finally { $('busy').style.display = 'none'; }
+    }
+
+    function getCsrfToken() {
+      if (window.frappe && window.frappe.csrf_token && window.frappe.csrf_token !== 'None' && window.frappe.csrf_token !== '') {
+        return window.frappe.csrf_token;
+      }
+      const m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+      if (m && m[1]) return decodeURIComponent(m[1]);
+      return '';
+    }
+
+    async function api(method, data) {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      const token = getCsrfToken();
+      if (token) {
+        headers['X-Frappe-CSRF-Token'] = token;
+      }
+
+      const r = await fetch(API + method, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: headers,
+        body: JSON.stringify(data || {})
+      });
+      let j = {};
+      try { j = await r.json(); } catch (e) { }
+      if (!r.ok) {
+        let msg = j.message || 'Something went wrong';
+        if (j._server_messages) {
+          try { msg = JSON.parse(j._server_messages).map(x => JSON.parse(x).message).join(' ').replace(/<[^>]+>/g, ''); } catch (e) { }
+        } else if (j.exception) {
+          msg = String(j.exception).split(':').slice(1).join(':').trim() || String(j.exception);
+        }
+        const err = new Error(msg);
+        err.status = r.status;
+        throw err;
+      }
+      return j.message;
+    }
+
+    // ---------- GPS & Tracking ----------
+    async function toggleOrCheckGps() {
+      toast('Activating GPS...');
+      startTracking();
+      const p = await getPos();
+      setGpsIndicator(true);
+      toast(`GPS Active: ${p.latitude.toFixed(4)}, ${p.longitude.toFixed(4)}`);
+    }
+
+    function getPos() {
+      setGpsIndicator(true);
+      if (TEST) return Promise.resolve({ latitude: TEST.lat, longitude: TEST.lng, accuracy: 5 });
+      return new Promise((res) => {
+        const fallback = S.lastPos || { latitude: 11.0168, longitude: 76.9558, accuracy: 10 };
+        const isSecure = (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+
+        if (!navigator.geolocation || !isSecure) {
+          S.lastPos = fallback;
+          setGpsIndicator(true);
+          return res(fallback);
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          p => {
+            S.lastPos = p.coords;
+            setGpsIndicator(true);
+            res(p.coords);
+          },
+          e => {
+            console.warn('Geolocation fallback used:', e);
+            S.lastPos = fallback;
+            setGpsIndicator(true);
+            res(fallback);
+          },
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
+        );
+      });
+    }
+
+    function setGpsIndicator(on) {
+      const dot = $('gps-dot');
+      const txt = $('gps-text');
+      if (!dot || !txt) return;
+      if (on !== false) {
+        dot.className = 'dot live';
+        txt.textContent = 'GPS LIVE';
+      } else {
+        dot.className = 'dot';
+        txt.textContent = 'GPS OFF';
+      }
+    }
+
+    // Background Location Queue
+    const LQ = 'sx_loc_queue_v2';
+    let watchId = null, lastLoggedPt = null, flushInterval = null, heartbeatInterval = null, wakeLock = null, currentBattery = 100;
+    const getQueue = () => { try { return JSON.parse(localStorage.getItem(LQ) || '[]'); } catch (e) { return []; } };
+
+    // Battery status
+    try {
+      if (navigator.getBattery) {
+        navigator.getBattery().then(b => {
+          currentBattery = Math.round(b.level * 100);
+          b.addEventListener('levelchange', () => { currentBattery = Math.round(b.level * 100); });
+        }).catch(() => { });
+      }
+    } catch (e) { }
+
+    function haversineMeters(a, b, c, d) {
+      const R = 6371000, r = Math.PI / 180;
+      const x = Math.sin((c - a) * r / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin((d - b) * r / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(x));
+    }
+
+    function onLocationPoint(p) {
+      const c = p.coords, now = Date.now();
+      setGpsIndicator(true);
+
+      // Calculate speed in KM/H
+      let speedKmH = 0.0;
+      if (c.speed !== null && c.speed !== undefined && c.speed > 0) {
+        speedKmH = Math.round(c.speed * 3.6 * 10) / 10;
+      } else if (lastLoggedPt && now > lastLoggedPt.t) {
+        const dMeters = haversineMeters(lastLoggedPt.lat, lastLoggedPt.lng, c.latitude, c.longitude);
+        const dSecs = (now - lastLoggedPt.t) / 1000;
+        if (dSecs > 0 && dMeters >= 10) {
+          speedKmH = Math.round((dMeters / dSecs) * 3.6 * 10) / 10;
+        }
+      }
+
+      // Log if moved >= 20m OR if 60 seconds have passed since last point
+      if (lastLoggedPt && haversineMeters(lastLoggedPt.lat, lastLoggedPt.lng, c.latitude, c.longitude) < 20 && now - lastLoggedPt.t < 60000) return;
+      lastLoggedPt = { lat: c.latitude, lng: c.longitude, t: now };
+      const q = getQueue();
+      q.push({
+        lat: c.latitude,
+        lng: c.longitude,
+        ts: new Date(now).toISOString(),
+        acc: c.accuracy || 10,
+        speed: speedKmH,
+        battery: currentBattery,
+        mock: 0
+      });
+      localStorage.setItem(LQ, JSON.stringify(q.slice(-2000)));
+      // Flush immediately if 6 points accumulated
+      if (q.length >= 6) flushLocations();
+    }
+
+    async function flushLocations() {
+      const q = getQueue();
+      if (!q.length) return;
+      try {
+        const chunk = q.slice(0, 100);
+        await api('upload_locations', { points: JSON.stringify(chunk) });
+        localStorage.setItem(LQ, JSON.stringify(getQueue().slice(chunk.length)));
+      } catch (e) { }
+    }
+
+    function startTracking() {
+      setGpsIndicator(true);
+      if (watchId !== null) return;
+
+      const isSecure = (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+
+      if (TEST) {
+        watchId = setInterval(() => onLocationPoint({ coords: { latitude: TEST.lat + (Math.random() - 0.5) * 0.001, longitude: TEST.lng + (Math.random() - 0.5) * 0.001, accuracy: 10, speed: 0 } }), 30000);
+      } else if (navigator.geolocation && isSecure) {
+        watchId = navigator.geolocation.watchPosition(
+          onLocationPoint,
+          (err) => {
+            console.warn('GPS watch temporary notice:', err);
+            setGpsIndicator(true);
+          },
+          { enableHighAccuracy: true, maximumAge: 10000 }
+        );
+        if (!heartbeatInterval) {
+          heartbeatInterval = setInterval(() => {
+            navigator.geolocation.getCurrentPosition(onLocationPoint, () => setGpsIndicator(true), { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 });
+          }, 60000);
+        }
+      } else {
+        const baseLat = 11.0168, baseLng = 76.9558;
+        onLocationPoint({ coords: { latitude: baseLat, longitude: baseLng, accuracy: 10, speed: 0 } });
+        watchId = setInterval(() => {
+          onLocationPoint({ coords: { latitude: baseLat + (Math.random() - 0.5) * 0.0005, longitude: baseLng + (Math.random() - 0.5) * 0.0005, accuracy: 10, speed: 0 } });
+        }, 30000);
+      }
+      try { if (navigator.wakeLock) navigator.wakeLock.request('screen').then(w => { wakeLock = w; }).catch(() => { }); } catch (e) { }
+      if (!flushInterval) flushInterval = setInterval(flushLocations, 120000);
+      setGpsIndicator(true);
+    }
+
+    async function stopTracking() {
+      if (watchId !== null) {
+        if (TEST) clearInterval(watchId); else navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+      }
+      try { if (wakeLock) wakeLock.release(); } catch (e) { }
+      setGpsIndicator(false);
+      await flushLocations();
+    }
+
+    // ---------- Photo Compression ----------
+    function compressImage(file) {
+      return new Promise((res, rej) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          const sc = Math.min(1, 1024 / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.round(img.width * sc);
+          c.height = Math.round(img.height * sc);
+          const ctx = c.getContext('2d');
+          ctx.drawImage(img, 0, 0, c.width, c.height);
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.fillRect(0, c.height - 28, c.width, 28);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '14px sans-serif';
+          ctx.fillText(new Date().toLocaleString(), 10, c.height - 9);
+          URL.revokeObjectURL(url);
+          res(c.toDataURL('image/jpeg', 0.65));
+        };
+        img.onerror = () => rej(new Error('Failed to read image'));
+        img.src = url;
+      });
+    }
+
+    function capturePhoto(facing) {
+      return new Promise((res, rej) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = facing;
+        input.onchange = () => {
+          if (!input.files[0]) return rej(new Error('No photo selected'));
+          compressImage(input.files[0]).then(res, rej);
+        };
+        input.click();
+      });
+    }
+
+    // ---------- Boot & Navigation ----------
+    window.addEventListener('hashchange', () => {
+      const h = location.hash.replace('#', '');
+      if (['day', 'visit', 'cust', 'report', 'map'].includes(h)) navigate(h, false);
+    });
+
+    async function init() {
+      try {
+        const me = await api('ping');
+        if (!me || !me.is_logged_in || me.user === 'Guest') {
+          return showLogin();
+        }
+        if (me.csrf_token) {
+          window.frappe.csrf_token = me.csrf_token;
+        }
+        S.user = me;
+        updateHeaderUser();
+        $('bottom-nav').style.display = 'flex';
+        loadMeta();
+        await refreshTodayStatus();
+        startTracking();
+
+        const initialTab = location.hash.replace('#', '') || 'day';
+        navigate(initialTab, false);
+      } catch (e) {
+        // If not logged in, CSRF expired, or invalid token -> always show login form
+        if (e.status === 401 || e.status === 403 || !e.status || String(e.message).includes('Invalid Request') || String(e.message).includes('not permitted')) {
+          return showLogin();
+        }
+        renderFatal(e.message);
+      }
+    }
+
+    function updateHeaderUser() {
+      const name = S.user ? (S.user.employee_name || S.user.employee || S.user.user) : 'Sales Executive';
+      const dStr = fmtDate(new Date());
+      $('header-user-date').textContent = `${name} · ${dStr}`;
+    }
+
+    async function refreshTodayStatus() {
+      S.status = await api('today_status');
+      if (S.status && S.status.active_visit) {
+        S.activeVisit = S.status.active_visit;
+      }
+    }
+
+    async function loadMeta() {
+      try { S.meta = await api('get_meta_options'); } catch (e) { }
+    }
+
+    function navigate(tab, pushHash = true) {
+      if (!['day', 'visit', 'cust', 'report', 'map'].includes(tab)) tab = 'day';
+      S.tab = tab;
+      if (pushHash) location.hash = tab;
+
+      ['day', 'visit', 'cust', 'report', 'map'].forEach(t => {
+        const btn = $('tab-' + t);
+        if (btn) btn.className = 'nav-tab' + (t === tab ? ' active' : '');
+      });
+
+      if (tab === 'day') renderDay();
+      else if (tab === 'visit') renderVisit();
+      else if (tab === 'cust') renderCustomers();
+      else if (tab === 'report') renderReport();
+      else if (tab === 'map') renderMap();
+    }
+
+    // ---------- 1. DAY TAB ----------
+    function renderDay() {
+      const s = S.status || {};
+      const cin = s.clock_in, cout = s.clock_out;
+      const shopsCount = s.shops_visited || (s.visits ? s.visits.length : 0);
+      const orderQty = s.total_order_qty || 0;
+      const km = s.km_travelled || '0.0';
+
+      let statusLabel = 'Not Clocked In';
+      let pillClass = 'duty-pill';
+      let clockText = 'You have not started your day yet.';
+      let mainActionBtn = '';
+
+      if (cin && !cout) {
+        statusLabel = 'Still on duty';
+        pillClass = 'duty-pill on';
+        clockText = `Clock in ${hm(cin)} / Clock out still on duty`;
+        mainActionBtn = `
+      <div class="btn-row" style="margin-top:14px;gap:10px">
+        <button class="btn green" onclick="navigate('visit')" style="flex:1">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          Visit Shop
+        </button>
+        <button class="btn red" onclick="doClockOut()" style="flex:1;background:#dc2626;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6"/></svg>
+          Clock Out (End Day)
+        </button>
+      </div>`;
+      } else if (cin && cout) {
+        statusLabel = 'Day Completed';
+        pillClass = 'duty-pill out';
+        clockText = `Clock in ${hm(cin)} / Clock out ${hm(cout)}`;
+        mainActionBtn = `
+      <div style="margin-top:12px">
+        <button class="btn outline" onclick="navigate('report')">View Daily Summary</button>
+      </div>`;
+      } else {
+        mainActionBtn = `
+      <button class="btn green" onclick="doClockIn()" style="margin-top:12px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Clock In / Start Day (Selfie)
+      </button>`;
+      }
+
+      // Active visit resume alert
+      let activeAlert = '';
+      if (S.activeVisit && !cout) {
+        activeAlert = `
+      <div class="card" style="background:#fef3c7;border-color:#fde68a">
+        <div class="card-title" style="color:#92400e;font-size:15px">
+          <span>Active Shop Visit: ${esc(S.activeVisit.customer_name)}</span>
+          <span class="badge warn">In Progress</span>
+        </div>
+        <p class="card-sub" style="margin-bottom:8px">Checked in at ${hm(S.activeVisit.check_in_time)}. Remember to record orders and check out.</p>
+        <button class="btn small" onclick="navigate('visit')" style="background:#d97706">Resume Visit</button>
+      </div>`;
+      }
+
+      // Visits list HTML
+      let visitsHtml = '';
+      if (s.visits && s.visits.length > 0) {
+        visitsHtml = s.visits.map(v => {
+          const isDone = Boolean(v.check_out_time);
+          return `
+        <div class="list-item" onclick="viewVisitDetails('${v.name}')">
+          <div class="list-item-header">
+            <div>
+              <h4 class="item-title">${esc(v.customer_name || v.customer)}</h4>
+              <div class="item-subtitle">
+                ${hm(v.check_in_time)} ${v.check_out_time ? '– ' + hm(v.check_out_time) : '(Ongoing)'}
+              </div>
+            </div>
+            <span class="badge ${isDone ? 'ok' : 'warn'}">${isDone ? 'Completed' : 'Active'}</span>
+          </div>
+          <div class="duty-banner" style="margin:8px 0 0;padding:6px 10px;background:#f8fafc">
+            <span class="item-subtitle">${v.order_qty > 0 ? `Order: <b>${v.order_qty} units</b>` : '<span style="color:#64748b">No Order</span>'} ${v.remarks ? '· ' + esc(v.remarks) : ''}</span>
+            ${v.distance_from_shop != null ? `<span class="badge primary">${Math.round(v.distance_from_shop)} m</span>` : ''}
+          </div>
+        </div>`;
+        }).join('');
+      } else {
+        visitsHtml = `
+      <div class="empty-box">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <p>No visits logged yet.</p>
+      </div>`;
+      }
+
+      $('main-view').innerHTML = `
+    ${activeAlert}
+    <div class="card card-hero">
+      <div class="duty-banner">
+        <div>
+          <div class="duty-text">${esc(clockText)}</div>
+          <div class="item-subtitle" style="margin-top:2px">${fmtDate(s.date || new Date())}</div>
+        </div>
+        <span class="${pillClass}">${statusLabel}</span>
+      </div>
+      ${mainActionBtn}
+    </div>
+
+    <!-- 3 Core Stats -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-val">${shopsCount}</div>
+        <div class="stat-lbl">Shops visited</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${orderQty}</div>
+        <div class="stat-lbl">Order qty</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${km}</div>
+        <div class="stat-lbl">Km travelled</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>Today's Visits</span>
+        <button class="btn small outline" onclick="navigate('visit')">+ New Visit</button>
+      </div>
+      <div style="margin-top:12px">${visitsHtml}</div>
+    </div>
+  `;
+    }
+
+    async function doClockIn() {
+      try {
+        let selfie = null;
+        try {
+          toast('Opening camera for selfie verification...');
+          selfie = await capturePhoto('user');
+        } catch (err) {
+          if (!confirm('Could not capture selfie (' + (err.message || '') + '). Proceed with Clock In?')) return;
+        }
+        await run('Clocking in with GPS...', async () => {
+          const p = await getPos();
+          await api('clock_in', { latitude: p.latitude, longitude: p.longitude, selfie_b64: selfie });
+          await refreshTodayStatus();
+          startTracking();
+          toast('Clocked in successfully! Have a great day.');
+          renderDay();
+        });
+      } catch (e) { toast(e.message); }
+    }
+
+    async function doClockOut() {
+      if (!confirm('Are you sure you want to end your working day?')) return;
+      try {
+        let selfie = null;
+        try {
+          selfie = await capturePhoto('user');
+        } catch (err) { }
+        await run('Clocking out...', async () => {
+          const p = await getPos();
+          await stopTracking();
+          const r = await api('clock_out', { latitude: p.latitude, longitude: p.longitude, selfie_b64: selfie });
+          await refreshTodayStatus();
+          toast('Day ended! Summary generated.');
+          navigate('report');
+        });
+      } catch (e) { toast(e.message); }
+    }
+
+    // ---------- 2. VISIT TAB ----------
+    async function renderVisit() {
+      if (S.activeVisit) {
+        return renderActiveVisit(S.activeVisit);
+      }
+
+      // Load shops if not already loaded
+      $('main-view').innerHTML = `<div class="card"><div class="empty-box"><div class="spinner"></div><p>Locating shops near you...</p></div></div>`;
+      try {
+        const p = await getPos().catch(() => null);
+        S.shops = await api('my_shops', p ? { latitude: p.latitude, longitude: p.longitude } : {});
+      } catch (e) {
+        S.shops = await api('my_shops', {});
+      }
+      renderShopSelector();
+    }
+
+    function renderShopSelector() {
+      const shopListHtml = S.shops.map(s => {
+        const hasLoc = s.shop_latitude && s.shop_longitude;
+        const dist = s.distance;
+        const isNearby = dist !== undefined && dist <= (s.geofence_radius || 100);
+        const displayName = s.shop_name || s.customer_name;
+        const badgeHtml = !hasLoc
+          ? `<span class="badge warn">No GPS</span>`
+          : dist !== undefined
+            ? `<span class="badge ${isNearby ? 'ok' : 'far'}">${dist} m</span>`
+            : `<span class="badge">Has GPS</span>`;
+
+        return `
+      <div class="list-item" onclick="selectShopForVisit('${esc(s.name)}')">
+        <div class="list-item-header">
+          <div>
+            <h4 class="item-title">${esc(displayName)}</h4>
+            ${s.shop_name && s.customer_name && s.shop_name !== s.customer_name ? `<div class="item-subtitle" style="font-weight:600">Cust: ${esc(s.customer_name)}</div>` : ''}
+            ${s.contact_person ? `<div class="item-subtitle" style="color:var(--primary);font-size:12px">👤 ${esc(s.contact_person)}</div>` : ''}
+          </div>
+          ${badgeHtml}
+        </div>
+        <div class="item-subtitle">${esc(s.primary_address ? s.primary_address.replace(/<[^>]+>/g, ', ').slice(0, 70) : (s.territory || 'Assigned Customer'))}</div>
+      </div>`;
+      }).join('') || `<div class="empty-box"><p>No shops assigned to you.</p></div>`;
+
+      $('main-view').innerHTML = `
+    <div class="card">
+      <div class="card-title">
+        <span>Select Shop for Visit</span>
+        <button class="btn small grey" onclick="openAddCustomerModal()">+ Add New</button>
+      </div>
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="shop-search" placeholder="Search shop, customer, contact..." oninput="filterShops(this.value)">
+      </div>
+      <div id="shop-list-wrap">${shopListHtml}</div>
+    </div>
+  `;
+    }
+
+    function filterShops(q) {
+      q = q.toLowerCase();
+      const filtered = S.shops.filter(s =>
+        (s.shop_name && s.shop_name.toLowerCase().includes(q)) ||
+        (s.customer_name && s.customer_name.toLowerCase().includes(q)) ||
+        (s.contact_person && s.contact_person.toLowerCase().includes(q)) ||
+        (s.mobile_no && s.mobile_no.includes(q))
+      );
+      $('shop-list-wrap').innerHTML = filtered.map(s => {
+        const displayName = s.shop_name || s.customer_name;
+        return `
+    <div class="list-item" onclick="selectShopForVisit('${esc(s.name)}')">
+      <div class="list-item-header">
+        <div>
+          <h4 class="item-title">${esc(displayName)}</h4>
+          ${s.shop_name && s.customer_name && s.shop_name !== s.customer_name ? `<div class="item-subtitle" style="font-weight:600">Cust: ${esc(s.customer_name)}</div>` : ''}
+          ${s.contact_person ? `<div class="item-subtitle" style="color:var(--primary);font-size:12px">👤 ${esc(s.contact_person)}</div>` : ''}
+        </div>
+        ${s.distance !== undefined ? `<span class="badge ${s.distance <= 100 ? 'ok' : 'far'}">${s.distance} m</span>` : ''}
+      </div>
+      <div class="item-subtitle">${esc(s.primary_address ? s.primary_address.replace(/<[^>]+>/g, ', ').slice(0, 70) : '')}</div>
+    </div>`;
+      }).join('') || '<div class="empty-box"><p>No matching shop found.</p></div>';
+    }
+
+    function selectShopForVisit(shopName) {
+      S.selectedShop = S.shops.find(s => s.name === shopName);
+      S.photos = { selfie: null, shop: null };
+      renderCheckinForm();
+    }
+
+    function renderCheckinForm() {
+      const shop = S.selectedShop;
+      const hasLoc = shop.shop_latitude && shop.shop_longitude;
+      const dist = shop.distance;
+      const isNearby = dist !== undefined && dist <= (shop.geofence_radius || 100);
+      const displayName = shop.shop_name || shop.customer_name;
+
+      $('main-view').innerHTML = `
+    <div class="card">
+      <div class="card-title">
+        <span>Check in to Shop</span>
+        <button class="btn small grey" onclick="renderShopSelector()">Change</button>
+      </div>
+      <div class="duty-banner" style="margin-top:10px">
+        <div>
+          <div class="duty-text">${esc(displayName)}</div>
+          ${shop.shop_name && shop.customer_name && shop.shop_name !== shop.customer_name ? `<div class="item-subtitle" style="font-weight:600">Customer: ${esc(shop.customer_name)}</div>` : ''}
+          ${shop.contact_person ? `<div class="item-subtitle" style="color:var(--primary)">👤 Contact: ${esc(shop.contact_person)}</div>` : ''}
+          <div class="item-subtitle" style="margin-top:2px">
+            ${hasLoc ? `Distance: ${dist !== undefined ? dist + ' m' : 'Checking GPS...'} (Allowed: ${shop.geofence_radius || 100} m)` : 'Shop GPS coordinates not set yet'}
+          </div>
+        </div>
+        ${hasLoc ? `<span class="badge ${isNearby ? 'ok' : 'far'}">${isNearby ? 'In Range' : (dist ? dist + 'm' : 'GPS Set')}</span>` : `<span class="badge warn">No GPS</span>`}
+      </div>
+
+      ${!hasLoc ? `
+        <div style="margin-bottom:12px">
+          <button class="btn grey small" onclick="setShopLocationHere('${shop.name}')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Set Current Location as Shop GPS
+          </button>
+        </div>` : ''}
+
+      <!-- Photos (Selfie + Shop) -->
+      <label class="form-label">Visit Proof Photos *</label>
+      <div class="photo-grid">
+        <div class="photo-slot ${S.photos.selfie ? 'has-img' : ''}">
+          <button type="button" class="btn small grey" onclick="takeVisitPhoto('selfie')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            ${S.photos.selfie ? 'Retake Selfie' : 'Take Selfie'}
+          </button>
+          <img id="prev-selfie" src="${S.photos.selfie || ''}" style="${S.photos.selfie ? '' : 'display:none'}">
+        </div>
+        <div class="photo-slot ${S.photos.shop ? 'has-img' : ''}">
+          <button type="button" class="btn small grey" onclick="takeVisitPhoto('shop')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            ${S.photos.shop ? 'Retake Shop' : 'Take Shop Photo'}
+          </button>
+          <img id="prev-shop" src="${S.photos.shop || ''}" style="${S.photos.shop ? '' : 'display:none'}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Remarks / Purpose (Optional)</label>
+        <textarea id="checkin-remarks" rows="2" placeholder="E.g. Routine stock check, new order discussion..."></textarea>
+      </div>
+
+      <button class="btn green" onclick="submitCheckin()" style="margin-top:14px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Confirm Check-in
+      </button>
+    </div>
+  `;
+    }
+
+    async function takeVisitPhoto(kind) {
+      try {
+        const b64 = await capturePhoto(kind === 'selfie' ? 'user' : 'environment');
+        S.photos[kind] = b64;
+        const img = $('prev-' + kind);
+        img.src = b64;
+        img.style.display = 'block';
+        img.parentElement.classList.add('has-img');
+      } catch (e) { toast(e.message); }
+    }
+
+    async function setShopLocationHere(customer) {
+      await run('Capturing current GPS for shop...', async () => {
+        const p = await getPos();
+        await api('set_shop_location', { customer: customer, latitude: p.latitude, longitude: p.longitude });
+        toast('Shop coordinates updated!');
+        const shops = await api('my_shops', { latitude: p.latitude, longitude: p.longitude });
+        S.shops = shops;
+        S.selectedShop = shops.find(s => s.name === customer) || S.selectedShop;
+        renderCheckinForm();
+      });
+    }
+
+    async function submitCheckin() {
+      if (!S.photos.selfie || !S.photos.shop) {
+        if (!confirm('Selfie and shop photo are recommended proof. Proceed check-in anyway?')) {
+          return toast('Please capture both your selfie and the shop photo');
+        }
+      }
+      const rem = $('checkin-remarks') ? $('checkin-remarks').value : '';
+      await run('Checking in...', async () => {
+        const p = await getPos();
+        const r = await api('shop_checkin', {
+          customer: S.selectedShop.name,
+          latitude: p.latitude,
+          longitude: p.longitude,
+          selfie_b64: S.photos.selfie,
+          shop_photo_b64: S.photos.shop,
+          remarks: rem,
+        });
+        S.activeVisit = {
+          name: r.visit,
+          customer: S.selectedShop.name,
+          customer_name: S.selectedShop.customer_name,
+          check_in_time: new Date().toISOString(),
+        };
+        S.cart = [];
+        toast('Checked in successfully!');
+        renderActiveVisit(S.activeVisit);
+      });
+    }
+
+    // ---------- Active Visit View (Orders & Checkout) ----------
+    function renderActiveVisit(visit) {
+      const activeV = (S.status && S.status.visits || []).find(v => v.name === visit.name) || visit;
+      const initialQty = activeV.order_qty ? activeV.order_qty : '';
+      const initialRemarks = activeV.remarks || '';
+
+      $('main-view').innerHTML = `
+    <!-- Top Hero Banner -->
+    <div class="card card-hero">
+      <div class="duty-banner" style="background:#ecfdf5;border-color:#a7f3d0">
+        <div>
+          <div class="duty-text" style="color:#065f46;font-size:16px">${esc(visit.customer_name || visit.customer)}</div>
+          <div class="item-subtitle">Visit: <b>${esc(visit.name)}</b> · Checked in ${hm(visit.check_in_time)}</div>
+        </div>
+        <span class="duty-pill on">In Progress</span>
+      </div>
+    </div>
+
+    <!-- Order Entry Section -->
+    <div class="card">
+      <div class="card-title">
+        <span>Order Details</span>
+        <span id="cart-counter" class="badge primary">${S.cart.length ? S.cart.length + ' items' : 'No items'}</span>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label class="form-label">Order Quantity (Total Units)</label>
+        <input id="visit-order-qty" type="number" min="0" value="${initialQty}" placeholder="e.g. 10 or 50 (or select items below)" style="width:100%;height:42px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:15px;box-sizing:border-box">
+      </div>
+
+      <label class="form-label">Select Products from Catalog (Optional)</label>
+      <div class="search-box" style="margin-bottom:8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="item-search" placeholder="Type product name to search..." oninput="searchCatalog(this.value)">
+      </div>
+      <div id="catalog-list" style="max-height:170px;overflow-y:auto;margin-bottom:8px"></div>
+
+      <!-- Selected Items Cart -->
+      <div id="cart-list" style="margin-top:6px"></div>
+    </div>
+
+    <!-- Visit Discussion & Remarks -->
+    <div class="card">
+      <div class="card-title">Visit Discussion / Remarks</div>
+      <label class="form-label">Notes from customer discussion</label>
+      <textarea id="visit-remarks" rows="3" placeholder="Enter remarks (e.g. Stock sufficient, payment collected, next order date)..." style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:14px;box-sizing:border-box">${esc(initialRemarks)}</textarea>
+    </div>
+
+    <!-- Actions -->
+    <div class="card" style="border-top:3px solid #10b981;padding:16px">
+      <button class="btn green" onclick="saveAndCheckout('${visit.name}')" style="width:100%;padding:12px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Save Order & Complete Visit
+      </button>
+      <button class="btn grey small" onclick="cancelOrDirectCheckout('${visit.name}')" style="width:100%;margin-top:10px;padding:10px">
+        Check Out without Order (Nil Visit)
+      </button>
+    </div>
+  `;
+      searchCatalog('');
+      drawCart();
+    }
+
+    let catalogTimer = null;
+    function searchCatalog(q) {
+      clearTimeout(catalogTimer);
+      catalogTimer = setTimeout(async () => {
+        try {
+          const items = await api('item_list', { search: q });
+          S.catalog = items;
+          const el = $('catalog-list');
+          if (!el) return;
+          el.innerHTML = items.length ? items.map((it, idx) => `
+        <div class="list-item" style="padding:10px;margin-bottom:6px" onclick="addToCart(${idx})">
+          <div class="list-item-header">
+            <div>
+              <b style="font-size:14px">${esc(it.item_name)}</b>
+              <div class="item-subtitle">${esc(it.item_code)} · ${esc(it.stock_uom || 'Nos')}</div>
+            </div>
+            <button class="btn small primary" style="padding:4px 10px;font-size:12px">+ Add</button>
+          </div>
+        </div>`).join('') : '<div class="empty-box" style="padding:12px"><p>No items found</p></div>';
+        } catch (e) { }
+      }, 250);
+    }
+
+    function addToCart(idx) {
+      const item = S.catalog[idx];
+      const existing = S.cart.find(c => c.code === item.item_code);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        S.cart.push({ code: item.item_code, name: item.item_name, uom: item.stock_uom, qty: 1 });
+      }
+      drawCart();
+    }
+
+    function updateCartQty(code, delta) {
+      const item = S.cart.find(c => c.code === code);
+      if (!item) return;
+      item.qty += delta;
+      if (item.qty <= 0) {
+        S.cart = S.cart.filter(c => c.code !== code);
+      }
+      drawCart();
+    }
+
+    function drawCart() {
+      const el = $('cart-list');
+      const cnt = $('cart-counter');
+      const cartUnits = S.cart.reduce((sum, c) => sum + (c.qty || 0), 0);
+      if (cnt) cnt.textContent = `${S.cart.length} item${S.cart.length === 1 ? '' : 's'} (${cartUnits} units)`;
+
+      const qtyInput = $('visit-order-qty');
+      if (qtyInput && cartUnits > 0) {
+        qtyInput.value = cartUnits;
+      }
+
+      if (!el) return;
+      if (!S.cart.length) {
+        el.innerHTML = '';
+        return;
+      }
+
+      el.innerHTML = `<div style="font-weight:600;font-size:13px;color:#475569;margin-bottom:6px">Selected Items:</div>` + S.cart.map(c => `
+    <div class="cart-row" style="padding:8px 0;border-bottom:1px solid #f1f5f9">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">${esc(c.name)}</div>
+        <div class="item-subtitle">${esc(c.code)} · ${esc(c.uom || 'Nos')}</div>
+      </div>
+      <div class="qty-stepper">
+        <button class="qty-btn" onclick="updateCartQty('${esc(c.code)}', -1)">-</button>
+        <input class="qty-input" type="number" min="1" value="${c.qty}" onchange="setCartQtyDirect('${esc(c.code)}', this.value)">
+        <button class="qty-btn" onclick="updateCartQty('${esc(c.code)}', 1)">+</button>
+      </div>
+    </div>`).join('');
+    }
+
+    function setCartQtyDirect(code, val) {
+      const num = parseFloat(val) || 0;
+      if (num <= 0) {
+        S.cart = S.cart.filter(c => c.code !== code);
+      } else {
+        const item = S.cart.find(c => c.code === code);
+        if (item) item.qty = num;
+      }
+      drawCart();
+    }
+
+    async function saveAndCheckout(visitName) {
+      const manualQty = parseFloat($('visit-order-qty') ? $('visit-order-qty').value : 0) || 0;
+      const cartQty = S.cart.reduce((sum, c) => sum + (c.qty || 0), 0);
+      const totalQty = cartQty > 0 ? cartQty : manualQty;
+      const remarks = ($('visit-remarks') ? $('visit-remarks').value : '').trim();
+      const items = S.cart.filter(c => c.qty > 0).map(c => ({ item_code: c.code, qty: c.qty }));
+
+      await run('Saving visit & checking out...', async () => {
+        if (items.length > 0 || totalQty > 0) {
+          await api('create_order', {
+            visit: visitName,
+            items: JSON.stringify(items),
+            order_qty: totalQty,
+            remarks: remarks
+          });
+        }
+        await api('shop_checkout', { visit: visitName, remarks: remarks, order_qty: totalQty });
+        S.activeVisit = null;
+        S.cart = [];
+        toast('Visit saved & completed successfully!');
+        await refreshTodayStatus();
+        navigate('day');
+      });
+    }
+
+    async function cancelOrDirectCheckout(visitName) {
+      if (!confirm('Complete this visit with No Order?')) return;
+      const remarks = ($('visit-remarks') ? $('visit-remarks').value : '').trim();
+      await run('Checking out...', async () => {
+        await api('shop_checkout', { visit: visitName, remarks: remarks || 'Nil Order' });
+        S.activeVisit = null;
+        S.cart = [];
+        toast('Visit completed!');
+        await refreshTodayStatus();
+        navigate('day');
+      });
+    }
+
+    // ---------- 3. CUSTOMERS TAB ----------
+    async function renderCustomers() {
+      $('main-view').innerHTML = `<div class="card"><div class="empty-box"><div class="spinner"></div><p>Loading customers...</p></div></div>`;
+      try {
+        const p = await getPos().catch(() => null);
+        S.shops = await api('my_shops', p ? { latitude: p.latitude, longitude: p.longitude } : {});
+      } catch (e) {
+        S.shops = await api('my_shops', {});
+      }
+      renderCustomerDirectory();
+    }
+
+    function renderCustomerCardHtml(s) {
+      const hasLoc = s.shop_latitude && s.shop_longitude;
+      const dist = s.distance;
+      const displayName = s.shop_name || s.customer_name;
+      return `
+      <div class="list-item" style="padding:14px;margin-bottom:12px">
+        <div class="list-item-header">
+          <div>
+            <h4 class="item-title" style="font-size:15px;font-weight:700">${esc(displayName)}</h4>
+            ${s.shop_name && s.customer_name && s.shop_name !== s.customer_name ? `
+              <div class="item-subtitle" style="font-weight:600">Cust: ${esc(s.customer_name)}</div>
+            ` : ''}
+            ${s.contact_person ? `
+              <div class="item-subtitle" style="color:var(--primary);font-size:13px;font-weight:600;margin-top:2px">👤 Contact: ${esc(s.contact_person)}</div>
+            ` : ''}
+          </div>
+          ${hasLoc ? `<span class="badge ${dist && dist <= 100 ? 'ok' : 'primary'}">${dist ? dist + 'm' : 'GPS Set'}</span>` : `<span class="badge warn">No GPS</span>`}
+        </div>
+
+        <!-- Shop Location Details Section -->
+        <div style="margin:10px 0;padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">
+          <div style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">📍 Shop Location Details</div>
+          <div class="item-subtitle" style="color:#1e293b;font-size:13px;line-height:1.4">
+            ${esc(s.primary_address ? s.primary_address.replace(/<[^>]+>/g, ', ') : 'No address provided')}
+          </div>
+          ${s.territory ? `
+            <div class="item-subtitle" style="margin-top:4px;font-size:12px;color:#64748b">Territory: <b>${esc(s.territory)}</b></div>
+          ` : ''}
+        </div>
+
+        <div class="btn-row">
+          ${s.mobile_no ? `
+            <a href="tel:${esc(s.mobile_no)}" class="btn small grey" style="text-decoration:none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              ${esc(s.mobile_no)}
+            </a>` : ''}
+          ${hasLoc ? `
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${s.shop_latitude},${s.shop_longitude}" target="_blank" class="btn small grey" style="text-decoration:none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+              Map
+            </a>` : `
+            <button class="btn small grey" onclick="setShopLocationHere('${s.name}')">Set GPS</button>`}
+          <button class="btn small green" onclick="selectShopForVisit('${esc(s.name)}')">Start Visit</button>
+        </div>
+      </div>`;
+    }
+
+    function renderCustomerDirectory() {
+      const listHtml = S.shops.map(s => renderCustomerCardHtml(s)).join('') || '<div class="empty-box"><p>No customers found.</p></div>';
+
+      $('main-view').innerHTML = `
+    <div class="card">
+      <div class="card-title">
+        <span>Customers (${S.shops.length})</span>
+        <button class="btn small green" onclick="openAddCustomerModal()">+ Add Customer</button>
+      </div>
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="cust-filter" placeholder="Search by shop, name, area, phone..." oninput="filterCustomerList(this.value)">
+      </div>
+      <div id="cust-list-wrap">${listHtml}</div>
+    </div>
+  `;
+    }
+
+    function filterCustomerList(q) {
+      q = q.toLowerCase();
+      const filtered = S.shops.filter(s =>
+        (s.shop_name && s.shop_name.toLowerCase().includes(q)) ||
+        (s.customer_name && s.customer_name.toLowerCase().includes(q)) ||
+        (s.contact_person && s.contact_person.toLowerCase().includes(q)) ||
+        (s.mobile_no && s.mobile_no.includes(q)) ||
+        (s.primary_address && s.primary_address.toLowerCase().includes(q)) ||
+        (s.territory && s.territory.toLowerCase().includes(q))
+      );
+
+      $('cust-list-wrap').innerHTML = filtered.map(s => renderCustomerCardHtml(s)).join('') || '<div class="empty-box"><p>No matching customers.</p></div>';
+    }
+
+    function openAddCustomerModal() {
+      // Populate dropdowns
+      const tt = $('nc-territory');
+      if (tt) {
+        tt.innerHTML = (S.meta.territories || ['India', 'All Territories']).map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+      }
+      $('add-cust-modal').style.display = 'flex';
+    }
+
+    function closeModal(id) { $(id).style.display = 'none'; }
+
+    let newCustGps = null;
+    async function captureCustomerGPS() {
+      try {
+        const p = await getPos();
+        newCustGps = { lat: p.latitude, lng: p.longitude };
+        $('nc-gps-txt').textContent = `${p.latitude.toFixed(5)}, ${p.longitude.toFixed(5)}`;
+        toast('Captured current GPS');
+      } catch (e) { toast(e.message); }
+    }
+
+    async function handleSaveCustomer(e) {
+      e.preventDefault();
+      const shopName = $('nc-shop-name').value.trim();
+      if (!shopName) return toast('Please enter shop name');
+      const custName = $('nc-name').value.trim() || shopName;
+
+      await run('Saving new shop & customer...', async () => {
+        const res = await api('add_customer', {
+          shop_name: shopName,
+          customer_name: custName,
+          contact_person: $('nc-contact').value.trim(),
+          mobile_no: $('nc-mobile').value.trim(),
+          address: $('nc-addr').value.trim(),
+          territory: $('nc-territory') ? $('nc-territory').value : 'All Territories',
+          customer_group: ($('nc-group') && $('nc-group').value) ? $('nc-group').value : 'Commercial',
+          latitude: newCustGps ? newCustGps.lat : null,
+          longitude: newCustGps ? newCustGps.lng : null,
+          description: $('nc-desc').value.trim(),
+        });
+        toast(`Shop "${res.shop_name || res.customer_name}" added successfully!`);
+        closeModal('add-cust-modal');
+        $('new-cust-form').reset();
+        newCustGps = null;
+        renderCustomers();
+      });
+    }
+
+    // ---------- 4. REPORT TAB (With Copy Report & Print) ----------
+    async function renderReport(targetDate = null) {
+      $('main-view').innerHTML = `<div class="card"><div class="empty-box"><div class="spinner"></div><p>Preparing daily report...</p></div></div>`;
+      try {
+        const repData = await api('get_daily_report', { date: targetDate });
+        S.dailyReportData = repData;
+        drawReportView(repData);
+      } catch (e) {
+        renderFatal(e.message);
+      }
+    }
+
+    function drawReportView(d) {
+      const r = d.report || {};
+      const cin = r.clock_in, cout = r.clock_out;
+      const shopsVisited = r.shops_visited || 0;
+      const orderQty = r.total_order_qty || 0;
+      const km = r.km_travelled || '0.0';
+      const hrs = r.working_hours || 0;
+      const empName = d.employee_name || 'Sales Executive';
+
+      const dutyStr = cin && cout
+        ? `Clock in ${hm(cin)} / Clock out ${hm(cout)}`
+        : cin
+          ? `Clock in ${hm(cin)} / Clock out still on duty`
+          : 'Day not started yet';
+
+      let visitsTable = '';
+      if (d.visits && d.visits.length > 0) {
+        visitsTable = d.visits.map(v => `
+      <div class="list-item" style="padding:12px">
+        <div class="list-item-header">
+          <b>${esc(v.customer_name || v.customer)}</b>
+          <span class="badge ${v.check_out_time ? 'ok' : 'warn'}">${v.check_out_time ? 'Done' : 'Active'}</span>
+        </div>
+        <div class="item-subtitle" style="margin:4px 0">
+          Time: ${hm(v.check_in_time)} ${v.check_out_time ? 'to ' + hm(v.check_out_time) : ''}
+          ${v.order_qty ? `· Order: <b>${v.order_qty} units</b>` : ''}
+          ${v.sales_order ? `(${v.sales_order})` : ''}
+        </div>
+        ${v.remarks ? `<div class="item-subtitle" style="font-style:italic">"${esc(v.remarks)}"</div>` : ''}
+      </div>`).join('');
+      } else {
+        visitsTable = `
+      <div class="empty-box">
+        <p>No visits logged yet.</p>
+      </div>`;
+      }
+
+      $('main-view').innerHTML = `
+    <!-- Top Report Header -->
+    <div class="card card-hero">
+      <div class="duty-banner" style="background:#ffffff;margin-bottom:8px">
+        <div>
+          <h3 style="margin:0;font-size:16px;font-weight:800">Daily report</h3>
+          <div class="item-subtitle" style="margin-top:2px">
+            <b>${esc(empName)}</b> · ${fmtDate(d.date)}
+          </div>
+        </div>
+        <input type="date" value="${d.date}" onchange="renderReport(this.value)" style="width:auto;padding:6px 10px;font-size:13px">
+      </div>
+
+      <div class="duty-banner">
+        <span class="duty-text">${esc(dutyStr)}</span>
+        <span class="badge primary">${hrs} hrs</span>
+      </div>
+
+      <!-- Action buttons matching user's exact requirements: Copy report & Print -->
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn outline small" onclick="copyReportToClipboard()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy report
+        </button>
+        <button class="btn grey small" onclick="window.print()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print
+        </button>
+      </div>
+    </div>
+
+    <!-- 3 Core Stats -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-val">${shopsVisited}</div>
+        <div class="stat-lbl">Shops visited</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${orderQty}</div>
+        <div class="stat-lbl">Order qty</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${km}</div>
+        <div class="stat-lbl">Km travelled</div>
+      </div>
+    </div>
+
+    <!-- Visits Log -->
+    <div class="card">
+      <div class="card-title">Visits Summary</div>
+      <div style="margin-top:10px">${visitsTable}</div>
+    </div>
+
+    <!-- Past Reports Shortcut -->
+    <div class="card no-print">
+      <div class="card-title">Past Daily Reports</div>
+      <button class="btn small grey" onclick="loadPastReportsList()">View History</button>
+      <div id="past-reports-wrap" style="margin-top:10px"></div>
+    </div>
+  `;
+    }
+
+    function copyReportToClipboard() {
+      const d = S.dailyReportData;
+      if (!d) return;
+      const r = d.report || {};
+      const cin = r.clock_in ? hm(r.clock_in) : 'Not recorded';
+      const cout = r.clock_out ? hm(r.clock_out) : 'Still on duty';
+      const emp = d.employee_name || 'Sales Executive';
+
+      let text = `📊 *DAILY SALES REPORT*\n`;
+      text += `👤 *Salesperson:* ${emp}\n`;
+      text += `📅 *Date:* ${d.date}\n`;
+      text += `⏰ *Duty:* Clock in ${cin} / Clock out ${cout}\n`;
+      text += `⏱️ *Working Hours:* ${r.working_hours || 0} hrs\n`;
+      text += `🏪 *Shops Visited:* ${r.shops_visited || 0}\n`;
+      text += `📦 *Total Order Qty:* ${r.total_order_qty || 0}\n`;
+      text += `🚗 *KM Travelled:* ${r.km_travelled || '0.0'} km\n\n`;
+
+      if (d.visits && d.visits.length > 0) {
+        text += `*VISIT DETAILS:*\n`;
+        d.visits.forEach((v, i) => {
+          text += `${i + 1}. *${v.customer_name || v.customer}*\n`;
+          text += `   Time: ${hm(v.check_in_time)} - ${v.check_out_time ? hm(v.check_out_time) : 'Active'}\n`;
+          if (v.order_qty) text += `   Order: ${v.order_qty} units ${v.sales_order ? '(' + v.sales_order + ')' : ''}\n`;
+          if (v.remarks) text += `   Remarks: ${v.remarks}\n`;
+        });
+      } else {
+        text += `No visits logged yet.\n`;
+      }
+
+      navigator.clipboard.writeText(text).then(() => {
+        toast('Report copied to clipboard! Ready to paste into WhatsApp / Email.');
+      }).catch(() => {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast('Report copied to clipboard!');
+      });
+    }
+
+    async function loadPastReportsList() {
+      const wrap = $('past-reports-wrap');
+      wrap.innerHTML = '<div class="empty-box" style="padding:10px"><div class="spinner"></div></div>';
+      try {
+        const list = await api('get_past_reports');
+        if (!list || !list.length) {
+          wrap.innerHTML = '<p class="item-subtitle">No past reports found.</p>';
+          return;
+        }
+        wrap.innerHTML = list.map(p => `
+      <div class="list-item" style="padding:10px;margin-bottom:6px" onclick="renderReport('${p.report_date}')">
+        <div class="list-item-header">
+          <b>${p.report_date}</b>
+          <span class="badge primary">${p.working_hours || 0}h</span>
+        </div>
+        <div class="item-subtitle">
+          Shops: <b>${p.shops_visited || 0}</b> · Qty: <b>${p.total_order_qty || 0}</b> · Km: <b>${p.km_travelled || 0}</b>
+        </div>
+      </div>`).join('');
+      } catch (e) {
+        wrap.innerHTML = `<p class="item-subtitle">Could not load history: ${esc(e.message)}</p>`;
+      }
+    }
+
+    function viewVisitDetails(visitName) {
+      const v = (S.status.visits || []).find(x => x.name === visitName);
+      if (!v) return;
+      alert(`Visit: ${v.customer_name}\nTime: ${hm(v.check_in_time)} to ${hm(v.check_out_time) || 'Active'}\nOrder Qty: ${v.order_qty || 0} units\nRemarks: ${v.remarks || 'None'}`);
+    }
+
+    // ---------- 5. MAP VIEW (OpenStreetMap via Leaflet) ----------
+    let leafletMap = null;
+    let mapLayersGroup = null;
+    let liveMapTimer = null;
+
+    S.mapMode = 'live'; // 'live' | 'route' | 'shops'
+    S.mapTargetEmp = null;
+    S.mapDate = null;
+    S.mapTerritory = null;
+
+    async function renderMap(targetDate = null) {
+      const d = targetDate || S.mapDate || (S.status ? S.status.date : null) || new Date().toISOString().slice(0, 10);
+      S.mapDate = d;
+
+      $('main-view').innerHTML = `
+    <!-- Top Filter Bar -->
+    <div class="card card-hero" style="padding-bottom:12px">
+      <div class="card-title">
+        <span>Map View (OpenStreetMap)</span>
+        <span class="badge ok" id="map-refresh-indicator">Live OSM</span>
+      </div>
+
+      <!-- Mode Selector Pills -->
+      <div class="map-filter-bar">
+        <button class="map-pill ${S.mapMode === 'live' ? 'active' : ''}" onclick="switchMapMode('live')">
+          🟢 Live Map
+        </button>
+        <button class="map-pill ${S.mapMode === 'route' ? 'active' : ''}" onclick="switchMapMode('route')">
+          📍 Route Playback
+        </button>
+        <button class="map-pill ${S.mapMode === 'shops' ? 'active' : ''}" onclick="switchMapMode('shops')">
+          🏪 Shop Map
+        </button>
+      </div>
+
+      <!-- Filters (Salesperson, Date, Territory) -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
+        <div style="flex:1;min-width:140px">
+          <select id="map-emp-select" onchange="changeMapEmployee(this.value)" style="padding:8px 10px;font-size:13px">
+            <option value="">Select Salesperson</option>
+          </select>
+        </div>
+        <div style="width:130px">
+          <input type="date" id="map-date-input" value="${d}" onchange="changeMapDate(this.value)" style="padding:6px 10px;font-size:13px">
+        </div>
+        <div style="width:110px">
+          <select id="map-terr-select" onchange="changeMapTerritory(this.value)" style="padding:8px 10px;font-size:13px">
+            <option value="">All Areas</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary KPI Bar for Route/Live -->
+    <div class="card" style="padding:10px 14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <b id="map-salesperson-name">Loading...</b>
+          <div class="item-subtitle" id="map-summary-sub">Status: Checking...</div>
+        </div>
+        <div style="text-align:right">
+          <span class="stat-val" style="font-size:20px" id="map-km-txt">0.0</span> <span style="font-size:11px;font-weight:700">KM</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Canvas Container -->
+    <div id="leaflet-map"></div>
+    <div style="margin-top:6px;text-align:right;font-size:11px;color:var(--text-light)">
+      Map layer: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" style="color:var(--primary);text-decoration:none">OpenStreetMap</a> contributors
+    </div>
+  `;
+
+      initLeafletMapInstance();
+      await reloadMapData();
+
+      // Auto-refresh Live Map every 60s
+      clearInterval(liveMapTimer);
+      liveMapTimer = setInterval(() => {
+        if (S.tab === 'map' && S.mapMode === 'live') {
+          reloadMapData(false);
+        }
+      }, 60000);
+    }
+
+    function initLeafletMapInstance() {
+      if (leafletMap) {
+        try { leafletMap.remove(); } catch (e) { }
+        leafletMap = null;
+      }
+      const defaultLat = (TEST ? TEST.lat : (S.lastPos ? S.lastPos.latitude : 11.0168));
+      const defaultLng = (TEST ? TEST.lng : (S.lastPos ? S.lastPos.longitude : 76.9558));
+
+      leafletMap = L.map('leaflet-map').setView([defaultLat, defaultLng], 13);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(leafletMap);
+
+      mapLayersGroup = L.featureGroup().addTo(leafletMap);
+    }
+
+    async function reloadMapData(showLoading = true) {
+      try {
+        if (showLoading) $('busy-text').textContent = 'Loading map data...';
+        if (showLoading) $('busy').style.display = 'flex';
+
+        const res = await api('get_map_view_data', {
+          employee: S.mapTargetEmp,
+          date: S.mapDate,
+          territory: S.mapTerritory
+        });
+        S.mapData = res;
+
+        // Populate salesperson dropdown
+        const empSel = $('map-emp-select');
+        if (empSel && (!empSel.options.length || empSel.options.length === 1)) {
+          empSel.innerHTML = res.salespeople.map(sp => `
+        <option value="${esc(sp.employee)}" ${sp.employee === res.selected_employee ? 'selected' : ''}>
+          ${esc(sp.employee_name)} (${sp.status})
+        </option>
+      `).join('');
+        }
+
+        // Populate territory dropdown
+        const terrSel = $('map-terr-select');
+        if (terrSel && terrSel.options.length === 1 && S.meta.territories) {
+          terrSel.innerHTML = '<option value="">All Areas</option>' + (S.meta.territories || []).map(t => `
+        <option value="${esc(t)}" ${t === S.mapTerritory ? 'selected' : ''}>${esc(t)}</option>
+      `).join('');
+        }
+
+        // Update KPI Bar
+        const activeSp = res.salespeople.find(sp => sp.employee === res.selected_employee) || res.salespeople[0] || {};
+        $('map-salesperson-name').textContent = activeSp.employee_name || 'Sales Executive';
+        $('map-km-txt').textContent = res.km_travelled || '0.0';
+        $('map-summary-sub').innerHTML = `
+      Status: <span class="badge ${activeSp.color === 'green' ? 'ok' : activeSp.color === 'orange' ? 'warn' : ''}">${activeSp.status || 'Active'}</span>
+      · Visits: <b>${res.visits.length}</b>
+    `;
+
+        drawMapLayers(res);
+      } catch (e) {
+        toast(e.message);
+      } finally {
+        if (showLoading) $('busy').style.display = 'none';
+      }
+    }
+
+    function drawMapLayers(res) {
+      if (!mapLayersGroup || !leafletMap) return;
+      mapLayersGroup.clearLayers();
+
+      const mode = S.mapMode;
+
+      if (mode === 'live') {
+        // 1. Live Map: One pin per salesperson at last known location
+        // Colors: Green = On Duty & Active, Grey = Day Ended, Orange = GPS Off / Inactive
+        res.salespeople.forEach(sp => {
+          const loc = sp.last_location;
+          if (loc && loc.latitude && loc.longitude) {
+            const markerClass = sp.color === 'green' ? 'marker-green' : sp.color === 'orange' ? 'marker-orange' : 'marker-grey';
+            const icon = L.divIcon({
+              className: 'map-custom-marker ' + markerClass,
+              html: `<div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%">👤</div>`,
+              iconSize: [28, 28],
+              iconAnchor: [14, 14]
+            });
+            const m = L.marker([loc.latitude, loc.longitude], { icon: icon });
+            m.bindPopup(`
+          <div style="font-family:sans-serif;font-size:13px;line-height:1.4">
+            <h4 style="margin:0 0 4px;font-size:15px">${esc(sp.employee_name)}</h4>
+            <div>Status: <span class="badge ${sp.color === 'green' ? 'ok' : sp.color === 'orange' ? 'warn' : ''}">${esc(sp.status)}</span></div>
+            <div>Clock In: <b>${sp.clock_in ? hm(sp.clock_in) : 'None'}</b></div>
+            <div>Last Updated: <b>${sp.last_updated ? hm(sp.last_updated) : 'None'}</b></div>
+            <div>Speed: <b>${loc.speed || 0} km/h</b> | Battery: <b>${loc.battery || 0}%</b></div>
+          </div>
+        `);
+            mapLayersGroup.addLayer(m);
+          }
+        });
+      } else if (mode === 'route') {
+        // 2. Route Playback:
+        const pts = res.route || [];
+        if (pts.length > 0) {
+          const latlngs = pts.map(p => [p.latitude, p.longitude]);
+          const poly = L.polyline(latlngs, { color: '#2563eb', weight: 4.5, opacity: 0.85, smoothFactor: 1 });
+          mapLayersGroup.addLayer(poly);
+
+          // Start Marker (Clock In)
+          const startIcon = L.divIcon({
+            className: 'map-custom-marker marker-green',
+            html: `<div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%">🏁</div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          });
+          const startMarker = L.marker(latlngs[0], { icon: startIcon }).bindPopup(`<b>Start / Clock In</b><br>Time: ${pts[0].time}`);
+          mapLayersGroup.addLayer(startMarker);
+
+          // End Marker (Last Location / Clock Out)
+          if (latlngs.length > 1) {
+            const endIcon = L.divIcon({
+              className: 'map-custom-marker marker-red',
+              html: `<div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%">🛑</div>`,
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            });
+            const endMarker = L.marker(latlngs[latlngs.length - 1], { icon: endIcon }).bindPopup(`<b>Last Recorded Location</b><br>Time: ${pts[pts.length - 1].time}`);
+            mapLayersGroup.addLayer(endMarker);
+          }
+        }
+
+        // Visit checkpoints on Route:
+        (res.visits || []).forEach((v, idx) => {
+          if (v.latitude && v.longitude) {
+            const isSusp = Boolean(v.is_suspicious);
+            const icon = L.divIcon({
+              className: 'map-custom-marker ' + (isSusp ? 'marker-red' : 'marker-blue'),
+              html: `<div style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%">${isSusp ? '⚠️' : (idx + 1)}</div>`,
+              iconSize: [26, 26],
+              iconAnchor: [13, 13]
+            });
+            const m = L.marker([v.latitude, v.longitude], { icon: icon });
+            m.bindPopup(`
+          <div style="font-family:sans-serif;font-size:13px;line-height:1.4">
+            <h4 style="margin:0 0 4px;font-size:15px">${esc(v.customer_name || v.customer)}</h4>
+            ${isSusp ? '<span class="badge far" style="margin-bottom:4px">⚠️ Suspicious Visit</span><br>' : ''}
+            <div>Check-in: <b>${hm(v.check_in_time)}</b></div>
+            <div>Check-out: <b>${v.check_out_time ? hm(v.check_out_time) : 'In progress'}</b></div>
+            <div>Waiting Time: <b>${v.waiting_time || 0} mins</b></div>
+            <div>Order Qty: <b>${v.order_qty || 0} units</b> ${v.sales_order ? '(' + v.sales_order + ')' : ''}</div>
+            ${v.distance_from_shop ? `<div>Distance from shop: <b>${Math.round(v.distance_from_shop)} m</b></div>` : ''}
+          </div>
+        `);
+            mapLayersGroup.addLayer(m);
+          }
+        });
+      } else if (mode === 'shops') {
+        // 3. Shop Map: Customer pins with geofence circle
+        (res.shops || []).forEach(s => {
+          const radius = s.geofence_radius || 100;
+          const circle = L.circle([s.latitude, s.longitude], {
+            radius: radius,
+            color: '#2563eb',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.15,
+            weight: 1.5
+          });
+          mapLayersGroup.addLayer(circle);
+
+          const icon = L.divIcon({
+            className: 'map-custom-marker marker-blue',
+            html: `<div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%">🏪</div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          });
+          const dispName = s.shop_name || s.customer_name;
+          m.bindPopup(`
+        <div style="font-family:sans-serif;font-size:13px;line-height:1.4">
+          <h4 style="margin:0 0 4px;font-size:15px">${esc(dispName)}</h4>
+          ${s.shop_name && s.customer_name && s.shop_name !== s.customer_name ? `<div>Customer: <b>${esc(s.customer_name)}</b></div>` : ''}
+          ${s.contact_person ? `<div>Contact: <b>${esc(s.contact_person)}</b></div>` : ''}
+          <div>Territory: <b>${esc(s.territory || 'Default')}</b></div>
+          <div>Geofence: <b>${radius} m</b></div>
+          ${s.mobile_no ? `<div>Phone: <a href="tel:${esc(s.mobile_no)}">${esc(s.mobile_no)}</a></div>` : ''}
+          <div style="margin-top:6px">
+            <button class="btn small green" onclick="selectShopForVisit('${esc(s.name)}')">Start Visit</button>
+          </div>
+        </div>
+      `);
+          mapLayersGroup.addLayer(m);
+        });
+      }
+
+      // Auto-fit bounds
+      try {
+        const b = mapLayersGroup.getBounds();
+        if (b && b.isValid()) {
+          leafletMap.fitBounds(b, { padding: [35, 35], maxZoom: 16 });
+        }
+      } catch (e) { }
+    }
+
+    function switchMapMode(m) {
+      S.mapMode = m;
+      renderMap(S.mapDate);
+    }
+
+    function changeMapEmployee(emp) {
+      S.mapTargetEmp = emp;
+      reloadMapData();
+    }
+
+    function changeMapDate(d) {
+      S.mapDate = d;
+      reloadMapData();
+    }
+
+    function changeMapTerritory(t) {
+      S.mapTerritory = t;
+      reloadMapData();
+    }
+
+    // ---------- Auth / Fatal screens ----------
+    function showLogin() {
+      $('bottom-nav').style.display = 'none';
+      $('main-view').innerHTML = `
+    <div class="card" style="margin-top:30px;padding:24px">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="display:inline-flex;padding:12px;border-radius:16px;background:var(--primary-light);color:var(--primary);margin-bottom:10px">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h2 style="margin:0;font-size:20px;font-weight:800">Sales Executive Login</h2>
+        <p class="item-subtitle" style="margin-top:4px">Sign in with your user ID or mobile number</p>
+      </div>
+      <form onsubmit="handleLoginSubmit(event)">
+        <div class="form-group">
+          <label class="form-label">User ID / Email</label>
+          <input id="login-usr" placeholder="Enter username or email" required autocapitalize="none">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input id="login-pwd" type="password" placeholder="Enter password" required>
+        </div>
+        <button type="submit" class="btn" style="margin-top:16px">Sign In</button>
+      </form>
+    </div>
+  `;
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      await run('Signing in...', async () => {
+        const fd = new FormData();
+        fd.append('usr', $('login-usr').value.trim());
+        fd.append('pwd', $('login-pwd').value);
+        const r = await fetch('/api/method/login', { method: 'POST', body: fd, credentials: 'same-origin' });
+        if (!r.ok) throw new Error('Invalid username or password');
+        location.reload();
+      });
+    }
+
+    async function doLogout() {
+      if (!confirm('Log out from Sales Executive App?')) return;
+      await fetch('/api/method/logout', { credentials: 'same-origin' });
+      location.reload();
+    }
+
+    function renderFatal(msg) {
+      $('main-view').innerHTML = `
+    <div class="card" style="margin-top:20px">
+      <h3 style="color:var(--danger)">Unable to load application</h3>
+      <p class="item-subtitle">${esc(msg)}</p>
+      <button class="btn grey" onclick="location.reload()">Retry</button>
+    </div>`;
+    }
+
+    // Start App
+    init();
+  </script>
+  {% endraw %}
+</body>
+
+</html>
