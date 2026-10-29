@@ -1,0 +1,79 @@
+{
+ "app": "sales_executive_app",
+ "charts": [],
+ "content": "[{\"id\":\"sales-executive-app-shortcut\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales\",\"col\":4}},{\"id\":\"sales-executive-records-header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Sales Executive Records</b></span>\",\"col\":12}},{\"id\":\"sales-executive-records-card\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Executive Records\",\"col\":4}}]",
+ "creation": "2026-10-28 11:12:22.768121",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "chromium",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Sales Executive App",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Executive Records",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shop Visits",
+   "link_count": 0,
+   "link_to": "Shop Visit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Daily Reports",
+   "link_count": 0,
+   "link_to": "Daily Report",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Location Logs",
+   "link_count": 0,
+   "link_to": "Location Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-10-29 13:13:35.032202",
+ "modified_by": "Administrator",
+ "module": "Sales Executive App",
+ "name": "Sales Executive App",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "doc_view": "",
+   "label": "Sales",
+   "type": "URL",
+   "url": "/sales"
+  }
+ ],
+ "title": "Sales Executive App",
+ "type": "Workspace"
+}

@@ -14,7 +14,8 @@
   "accuracy",
   "speed",
   "battery",
-  "is_mock"
+  "is_mock",
+  "source"
  ],
  "fields": [
   {
@@ -58,6 +59,11 @@
    "fieldname": "is_mock",
    "fieldtype": "Check",
    "label": "Is Mock"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Data",
+   "label": "Source"
   }
  ],
  "grid_page_length": 50,

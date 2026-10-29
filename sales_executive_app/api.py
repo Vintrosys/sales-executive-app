@@ -1,7 +1,9 @@
 import math
 import base64
+from datetime import timedelta
 from dateutil import parser as date_parser
 import frappe
+from frappe.defaults import get_user_default
 from frappe.utils import now_datetime, today, flt, cint, get_datetime
 from frappe.utils.data import convert_utc_to_system_timezone
 from frappe.utils.file_manager import save_file
@@ -54,6 +56,116 @@ def save_photo(doctype, docname, b64, filename):
         b64 = b64.split(",", 1)[1]
     f = save_file(filename, base64.b64decode(b64), doctype, docname, is_private=0)
     return f.file_url
+
+
+def save_location_log(employee, latitude, longitude, source, timestamp=None, accuracy=10, speed=0, battery=100, is_mock=0):
+    timestamp = timestamp or now_datetime()
+    duplicate = frappe.db.exists(
+        "Location Log",
+        {
+            "employee": employee,
+            "timestamp": timestamp,
+            "latitude": flt(latitude),
+            "longitude": flt(longitude),
+            "source": source,
+        },
+    )
+    if duplicate:
+        return duplicate
+
+    doc = frappe.get_doc(
+        {
+            "doctype": "Location Log",
+            "employee": employee,
+            "timestamp": timestamp,
+            "latitude": flt(latitude),
+            "longitude": flt(longitude),
+            "accuracy": flt(accuracy),
+            "speed": flt(speed),
+            "battery": flt(battery),
+            "is_mock": cint(is_mock),
+            "source": source,
+        }
+    )
+    doc.insert(ignore_permissions=True)
+    return doc.name
+
+
+def get_attendance_checkins(employee, date):
+    return frappe.get_all(
+        "Employee Checkin",
+        filters={"employee": employee, "time": ["between", [date, date + " 23:59:59"]]},
+        fields=["log_type", "time"],
+        order_by="time asc",
+    )
+
+
+def summarize_attendance(checkins):
+    first_clock_in = None
+    active_clock_in = None
+    last_clock_out = None
+    total_seconds = 0
+    for checkin in checkins:
+        if checkin.log_type == "IN":
+            first_clock_in = first_clock_in or checkin.time
+            active_clock_in = checkin.time
+        elif checkin.log_type == "OUT":
+            last_clock_out = checkin.time
+            if active_clock_in:
+                total_seconds += max(
+                    0, (get_datetime(checkin.time) - get_datetime(active_clock_in)).total_seconds()
+                )
+                active_clock_in = None
+
+    if active_clock_in:
+        total_seconds += max(
+            0, (get_datetime(now_datetime()) - get_datetime(active_clock_in)).total_seconds()
+        )
+
+    return {
+        "first_clock_in": first_clock_in,
+        "clock_in": active_clock_in or first_clock_in,
+        "clock_out": None if active_clock_in else last_clock_out,
+        "is_on_duty": bool(active_clock_in),
+        "working_hours": round(total_seconds / 3600, 2),
+    }
+
+
+def attach_visit_item_details(visits):
+    if not visits:
+        return
+
+    names = [visit.name for visit in visits]
+    details = frappe.get_all(
+        "Item Details",
+        filters={"parent": ["in", names], "parenttype": "Shop Visit"},
+        fields=["parent", "item", "qty", "price"],
+        order_by="parent asc, idx asc",
+    )
+    item_codes = list({detail.item for detail in details if detail.item})
+    item_names = {}
+    if item_codes:
+        item_names = {
+            item.name: {"item_name": item.item_name, "stock_uom": item.stock_uom}
+            for item in frappe.get_all(
+                "Item",
+                filters={"name": ["in", item_codes]},
+                fields=["name", "item_name", "stock_uom"],
+            )
+        }
+    by_visit = {}
+    for detail in details:
+        by_visit.setdefault(detail.parent, []).append(
+            {
+                "item": detail.item,
+                "item_name": item_names.get(detail.item, {}).get("item_name", detail.item),
+                "stock_uom": item_names.get(detail.item, {}).get("stock_uom"),
+                "qty": detail.qty,
+                "price": detail.price,
+            }
+        )
+    for visit in visits:
+        visit["details"] = by_visit.get(visit.name, [])
 
 
 def parse_ts(ts):
@@ -270,15 +382,8 @@ def clock_in(latitude, longitude, selfie_b64=None):
     emp = get_employee()
     d = today()
 
-    already = frappe.db.exists(
-        "Employee Checkin",
-        {
-            "employee": emp,
-            "log_type": "IN",
-            "time": ["between", [d, d + " 23:59:59"]],
-        },
-    )
-    if already:
+    checkins = get_attendance_checkins(emp, d)
+    if checkins and checkins[-1].log_type == "IN":
         frappe.throw("You have already clocked in today")
 
     doc = frappe.get_doc({
@@ -295,21 +400,7 @@ def clock_in(latitude, longitude, selfie_b64=None):
     if selfie_b64:
         save_photo("Employee Checkin", doc.name, selfie_b64, "clockin_selfie.jpg")
 
-    # Record first GPS point in Location Log
-    try:
-        frappe.get_doc({
-            "doctype": "Location Log",
-            "employee": emp,
-            "timestamp": now_datetime(),
-            "latitude": flt(latitude),
-            "longitude": flt(longitude),
-            "accuracy": 10.0,
-            "speed": 0.0,
-            "battery": 100,
-            "is_mock": 0,
-        }).insert(ignore_permissions=True)
-    except Exception:
-        pass
+    save_location_log(emp, latitude, longitude, "Clock In")
 
     return {"name": doc.name, "time": str(doc.time)}
 
@@ -319,15 +410,8 @@ def clock_out(latitude, longitude, selfie_b64=None):
     emp = get_employee()
     d = today()
 
-    clocked_in = frappe.db.exists(
-        "Employee Checkin",
-        {
-            "employee": emp,
-            "log_type": "IN",
-            "time": ["between", [d, d + " 23:59:59"]],
-        },
-    )
-    if not clocked_in:
+    checkins = get_attendance_checkins(emp, d)
+    if not checkins or checkins[-1].log_type != "IN":
         frappe.throw("You have not clocked in today")
 
     # Auto checkout any active visit if forgotten
@@ -353,6 +437,7 @@ def clock_out(latitude, longitude, selfie_b64=None):
     if selfie_b64:
         save_photo("Employee Checkin", doc.name, selfie_b64, "clockout_selfie.jpg")
 
+    save_location_log(emp, latitude, longitude, "Clock Out")
     report = build_daily_report(emp, d)
     return {"name": doc.name, "time": str(doc.time), "report": report}
 
@@ -360,28 +445,44 @@ def clock_out(latitude, longitude, selfie_b64=None):
 # ---------- GPS tracking ----------
 
 @frappe.whitelist()
-def upload_locations(points):
+def upload_locations(points, sharing_enabled=0):
     """points = JSON list of {lat, lng, ts, acc, speed, battery, mock}"""
     emp = get_employee()
+    if not cint(sharing_enabled):
+        frappe.throw("Location sharing must be enabled to upload location updates")
+    checkins = get_attendance_checkins(emp, today())
+    if not checkins or checkins[-1].log_type != "IN":
+        frappe.throw("Location updates can only be saved while clocked in")
+
     points = frappe.parse_json(points)
     saved = 0
     for p in points[:500]:
-        try:
-            frappe.get_doc({
-                "doctype": "Location Log",
+        timestamp = parse_ts(p.get("ts"))
+        recent_log = frappe.get_all(
+            "Location Log",
+            filters={
                 "employee": emp,
-                "timestamp": parse_ts(p.get("ts")),
-                "latitude": flt(p.get("lat")),
-                "longitude": flt(p.get("lng")),
-                "accuracy": flt(p.get("acc")),
-                "speed": flt(p.get("speed")),
-                "battery": flt(p.get("battery")),
-                "is_mock": cint(p.get("mock")),
-            }).insert(ignore_permissions=True)
-            saved += 1
-        except Exception:
-            pass
-    return {"saved": saved}
+                "timestamp": [">=", get_datetime(timestamp) - timedelta(hours=1)],
+            },
+            fields=["name"],
+            order_by="timestamp desc",
+            limit=1,
+        )
+        if recent_log:
+            continue
+        save_location_log(
+            emp,
+            p.get("lat"),
+            p.get("lng"),
+            "Background",
+            timestamp=timestamp,
+            accuracy=p.get("acc"),
+            speed=p.get("speed"),
+            battery=p.get("battery", 100),
+            is_mock=p.get("mock"),
+        )
+        saved += 1
+    return {"saved": saved, "processed": min(len(points), 500)}
 
 
 # ---------- Shop Visits ----------
@@ -428,6 +529,8 @@ def shop_checkin(customer, latitude, longitude, selfie_b64=None, shop_photo_b64=
     visit.flags.ignore_permissions = True
     visit.insert()
 
+    save_location_log(emp, latitude, longitude, "Shop Check-in")
+
     updates = {}
     if selfie_b64:
         updates["selfie"] = save_photo("Shop Visit", visit.name, selfie_b64, "selfie.jpg")
@@ -459,20 +562,55 @@ def shop_checkout(visit, remarks=None, order_qty=None):
 
 # ---------- Orders & Catalog ----------
 
+def get_selling_price_list():
+    price_list = get_user_default("selling_price_list") or frappe.get_single_value(
+        "Selling Settings", "selling_price_list"
+    )
+    return frappe.db.get_value(
+        "Price List", {"name": price_list, "enabled": 1, "selling": 1}, "name"
+    )
+
+
+def get_selling_item_price(item_code, uom, price_list, customer=None):
+    if not price_list:
+        return 0
+
+    from erpnext.stock.get_item_details import get_item_price
+
+    price = get_item_price(
+        {
+            "price_list": price_list,
+            "uom": uom,
+            "transaction_date": today(),
+            "customer": customer,
+        },
+        item_code,
+    )
+    return flt(price[0].price_list_rate) if price else 0
+
+
 @frappe.whitelist()
-def item_list(search=""):
+def item_list(search="", customer=None):
     search = search.strip() if search else ""
-    return frappe.get_all(
+    items = frappe.get_all(
         "Item",
         filters={
             "disabled": 0,
             "is_sales_item": 1,
+            "item_group": "Finished Goods",
             "item_name": ["like", f"%{search}%"],
         },
-        fields=["item_code", "item_name", "stock_uom", "standard_rate"],
+        fields=["item_code", "item_name", "stock_uom"],
         limit=50,
         order_by="item_name asc",
     )
+    price_list = get_selling_price_list()
+    for item in items:
+        item["price"] = get_selling_item_price(
+            item.item_code, item.stock_uom, price_list, customer=customer
+        )
+
+    return items
 
 
 @frappe.whitelist()
@@ -483,9 +621,29 @@ def create_order(visit, items=None, order_qty=None, remarks=None):
         frappe.throw("Not allowed")
 
     parsed_items = frappe.parse_json(items) if items else []
+    if not isinstance(parsed_items, list):
+        frappe.throw("Order items must be a list")
     total_qty = flt(order_qty) if order_qty else sum(flt(i.get("qty", 0)) for i in parsed_items if flt(i.get("qty", 0)) > 0)
 
     updates = {"order_qty": total_qty}
+    item_rows = []
+    for item in parsed_items:
+        item_code = item.get("item_code") or item.get("item")
+        qty = flt(item.get("qty"))
+        if not item_code or qty <= 0:
+            continue
+        available_item = frappe.db.get_value(
+            "Item",
+            {"name": item_code, "disabled": 0, "is_sales_item": 1, "item_group": "Finished Goods"},
+            "name",
+        )
+        if not available_item:
+            frappe.throw(f"Item {item_code} is not an available Finished Goods item")
+        item_uom = frappe.db.get_value("Item", item_code, "stock_uom")
+        price = get_selling_item_price(
+            item_code, item_uom, get_selling_price_list(), customer=v.customer
+        )
+        item_rows.append({"item": item_code, "qty": qty, "price": price})
 
     combined_remarks = (remarks or "").strip()
     if parsed_items:
@@ -500,7 +658,9 @@ def create_order(visit, items=None, order_qty=None, remarks=None):
         updates["remarks"] = combined_remarks
 
     # Note: ERPNext Sales Order creation is completely disabled as requested
-    v.db_set(updates)
+    v.update(updates)
+    v.set("details", item_rows)
+    v.save(ignore_permissions=True)
     return {"order_qty": total_qty}
 
 
@@ -533,20 +693,9 @@ def build_daily_report(emp, date):
         fields=["check_in_time", "check_out_time", "order_qty"],
         order_by="check_in_time asc",
     )
-    checkins = frappe.get_all(
-        "Employee Checkin",
-        filters={"employee": emp, "time": ["between", [date, date + " 23:59:59"]]},
-        fields=["log_type", "time"],
-        order_by="time asc",
-    )
-    cin = next((c.time for c in checkins if c.log_type == "IN"), None)
-    cout = next((c.time for c in reversed(checkins) if c.log_type == "OUT"), None)
-
-    hours = 0
-    if cin and cout:
-        hours = round((get_datetime(cout) - get_datetime(cin)).total_seconds() / 3600, 2)
-    elif cin:
-        hours = round((get_datetime(now_datetime()) - get_datetime(cin)).total_seconds() / 3600, 2)
+    attendance = summarize_attendance(get_attendance_checkins(emp, date))
+    cin = attendance["first_clock_in"]
+    cout = attendance["clock_out"]
 
     values = {
         "employee": emp,
@@ -558,7 +707,7 @@ def build_daily_report(emp, date):
         "km_travelled": calc_km(emp, date),
         "first_visit_time": visits[0].check_in_time if visits else None,
         "last_visit_time": visits[-1].check_in_time if visits else None,
-        "working_hours": hours,
+        "working_hours": attendance["working_hours"],
     }
 
     name = frappe.db.exists("Daily Report", {"employee": emp, "report_date": date})
@@ -574,14 +723,9 @@ def today_status():
     emp = emp_info.get("name")
     d = today()
 
-    checkins = frappe.get_all(
-        "Employee Checkin",
-        filters={"employee": emp, "time": ["between", [d, d + " 23:59:59"]]},
-        fields=["log_type", "time"],
-        order_by="time asc",
-    )
-    cin = next((c.time for c in checkins if c.log_type == "IN"), None)
-    cout = next((c.time for c in reversed(checkins) if c.log_type == "OUT"), None)
+    attendance = summarize_attendance(get_attendance_checkins(emp, d))
+    cin = attendance["clock_in"]
+    cout = attendance["clock_out"]
 
     visits = frappe.get_all(
         "Shop Visit",
@@ -607,14 +751,9 @@ def today_status():
         if not v.check_out_time and not active_visit:
             active_visit = v
 
-    hours = 0
-    if cin and cout:
-        hours = round((get_datetime(cout) - get_datetime(cin)).total_seconds() / 3600, 2)
-    elif cin:
-        hours = round((get_datetime(now_datetime()) - get_datetime(cin)).total_seconds() / 3600, 2)
-
     km = calc_km(emp, d)
     total_qty = sum(flt(v.get("order_qty", 0)) for v in visits)
+    attach_visit_item_details(visits)
 
     return {
         "employee": emp,
@@ -622,7 +761,7 @@ def today_status():
         "date": d,
         "clock_in": cin,
         "clock_out": cout,
-        "working_hours": hours,
+        "working_hours": attendance["working_hours"],
         "km_travelled": km,
         "shops_visited": len(visits),
         "total_order_qty": total_qty,
@@ -657,6 +796,7 @@ def get_daily_report(date=None):
     )
     for v in visits:
         v["customer_name"] = frappe.db.get_value("Customer", v.customer, "customer_name")
+    attach_visit_item_details(visits)
 
     return {
         "report": rep,
@@ -702,14 +842,9 @@ def get_manager_dashboard():
 
     data = []
     for emp in employees:
-        checkins = frappe.get_all(
-            "Employee Checkin",
-            filters={"employee": emp.name, "time": ["between", [d, d + " 23:59:59"]]},
-            fields=["log_type", "time"],
-            order_by="time asc",
-        )
-        cin = next((c.time for c in checkins if c.log_type == "IN"), None)
-        cout = next((c.time for c in reversed(checkins) if c.log_type == "OUT"), None)
+        attendance = summarize_attendance(get_attendance_checkins(emp.name, d))
+        cin = attendance["clock_in"]
+        cout = attendance["clock_out"]
 
         visits = frappe.get_all(
             "Shop Visit",
@@ -754,14 +889,9 @@ def get_map_view_data(employee=None, date=None, territory=None):
         order_by="employee_name asc",
     )
     for emp in emp_list:
-        checkins = frappe.get_all(
-            "Employee Checkin",
-            filters={"employee": emp.name, "time": ["between", [d, d + " 23:59:59"]]},
-            fields=["log_type", "time"],
-            order_by="time asc",
-        )
-        cin = next((c.time for c in checkins if c.log_type == "IN"), None)
-        cout = next((c.time for c in reversed(checkins) if c.log_type == "OUT"), None)
+        attendance = summarize_attendance(get_attendance_checkins(emp.name, d))
+        cin = attendance["clock_in"]
+        cout = attendance["clock_out"]
 
         last_loc = frappe.get_all(
             "Location Log",
@@ -775,14 +905,11 @@ def get_map_view_data(employee=None, date=None, territory=None):
         color = "grey"
         last_updated_time = None
 
-        if cout:
-            status = "Day Ended"
-            color = "grey"
-        elif cin:
+        if attendance["is_on_duty"]:
             if last_loc:
                 last_time = get_datetime(last_loc[0].timestamp)
                 mins_ago = (get_datetime(now_datetime()) - last_time).total_seconds() / 60
-                if mins_ago <= 15:
+                if mins_ago <= 70:
                     color = "green"
                     status = "On Duty"
                 else:
@@ -791,6 +918,9 @@ def get_map_view_data(employee=None, date=None, territory=None):
             else:
                 color = "orange"
                 status = "GPS Off"
+        elif cin:
+            status = "Day Ended"
+            color = "grey"
         else:
             status = "Not Started"
             color = "grey"

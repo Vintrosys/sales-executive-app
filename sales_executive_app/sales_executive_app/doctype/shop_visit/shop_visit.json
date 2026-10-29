@@ -13,15 +13,17 @@
   "visit_date",
   "selfie",
   "sales_order",
-  "remarks",
   "column_break_7qzp",
   "customer",
   "check_out_time",
   "longitude",
   "distance_from_shop",
   "shop_photo",
-  "order_qty",
-  "is_suspicious"
+  "is_suspicious",
+  "section_break_5kqa",
+  "details",
+  "section_break_ksrq",
+  "remarks"
  ],
  "fields": [
   {
@@ -93,22 +95,31 @@
    "label": "Shop Photo"
   },
   {
-   "fieldname": "order_qty",
-   "fieldtype": "Float",
-   "label": "Order Qty"
-  },
-  {
    "default": "0",
    "description": "Mark if GPS looks suspicious or the user is outside the allowed distance",
    "fieldname": "is_suspicious",
    "fieldtype": "Check",
    "label": "Is Suspicious"
+  },
+  {
+   "fieldname": "section_break_5kqa",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Table",
+   "label": "Item Details",
+   "options": "Item Details"
+  },
+  {
+   "fieldname": "section_break_ksrq",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-27 11:25:14.051503",
+ "modified": "2026-10-29 13:26:15.103244",
  "modified_by": "Administrator",
  "module": "Sales Executive App",
  "name": "Shop Visit",
