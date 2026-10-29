@@ -19,6 +19,7 @@
   "longitude",
   "distance_from_shop",
   "shop_photo",
+  "order_qty",
   "is_suspicious",
   "section_break_5kqa",
   "details",
@@ -96,6 +97,13 @@
   },
   {
    "default": "0",
+   "fieldname": "order_qty",
+   "fieldtype": "Float",
+   "hidden": 1,
+   "label": "Order Qty"
+  },
+  {
+   "default": "0",
    "description": "Mark if GPS looks suspicious or the user is outside the allowed distance",
    "fieldname": "is_suspicious",
    "fieldtype": "Check",
@@ -119,7 +127,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 13:26:15.103244",
+ "modified": "2026-10-29 17:46:46.402961",
  "modified_by": "Administrator",
  "module": "Sales Executive App",
  "name": "Shop Visit",
