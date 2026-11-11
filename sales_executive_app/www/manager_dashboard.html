@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0f17">
+<title>Manager Dashboard · Sales Executive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--bg:#0b0f17;--side:#0f1522;--card:#141b2b;--card2:#1a2336;--ink:#e7ecf6;--soft:#b4bfd4;--muted:#7d8aa3;--line:#232d42;--line2:#33415c;--cyan:#22d3ee;--violet:#8b5cf6;--orange:#fb923c;--green:#34d399;--red:#f87171;--gray:#46526b;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#1a1f45 0,transparent 60%),var(--bg);color:var(--ink);font:13px/1.5 Poppins,system-ui,sans-serif}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}
+.app{display:flex;min-height:100vh;padding:18px;gap:18px;max-width:1760px;margin:0 auto}
+.side{position:sticky;top:18px;align-self:flex-start;display:flex;flex-direction:column;width:216px;height:calc(100vh - 36px);padding:22px 14px 16px;border:1px solid var(--line);border-radius:18px;background:var(--side)}
+.me{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:20px}
+.avatar-lg{display:grid;place-items:center;width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#0b0f17;font-size:26px;font-weight:700;box-shadow:0 0 30px #22d3ee33}
+.me b{margin-top:10px;font-size:14px}.me small{color:var(--muted);font-size:10px}
+.nav{display:grid;gap:3px}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--soft);text-decoration:none;font-weight:500;font-size:12px;border:1px solid transparent}
+.nav a:hover{background:var(--card2)}.nav a.active{background:#22d3ee14;border-color:#22d3ee44;color:var(--cyan);font-weight:600}
+.nav i{font-style:normal;width:18px;text-align:center;font-size:14px}
+.side-foot{margin-top:auto;padding:12px 6px 0;border-top:1px solid var(--line);color:var(--muted);font-size:10px}
+.body{flex:1;min-width:0}
+.top{position:sticky;top:0;z-index:1000;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;margin-bottom:16px;border:1px solid var(--line);border-radius:16px;background:#141b2bee;backdrop-filter:blur(10px)}
+.top h1{margin:0 auto 0 0;font-size:15px;font-weight:600}
+.search input{width:200px}
+.control{height:36px;padding:0 12px;border:1px solid var(--line2);border-radius:10px;background:var(--card2);font-size:11px}
+.control option{background:var(--card2)}
+input[type=date]{color-scheme:dark}
+.btn{height:36px;padding:0 14px;border:0;border-radius:10px;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#0b0f17;font-weight:700;font-size:11px}
+.btn:disabled{opacity:.5}
+.btn.ghost{background:var(--card2);color:var(--ink);border:1px solid var(--line2)}
+.card{min-width:0;margin-bottom:16px;padding:16px 18px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.card h2{margin:0;font-size:13px;font-weight:600}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.muted{color:var(--muted);font-size:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;background:#34d39926;color:var(--gt);font-size:10px;font-weight:600}
+.pill.off{background:#fb923c26;color:var(--wt)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card2)}
+.kpi-ic{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:#22d3ee22;color:var(--cyan);font-size:17px}
+.kpi:nth-child(2) .kpi-ic{background:#fb923c22;color:var(--orange)}.kpi:nth-child(3) .kpi-ic{background:#8b5cf622;color:var(--violet)}.kpi:nth-child(4) .kpi-ic{background:#34d39922;color:var(--green)}
+.kpi small{display:block;color:var(--muted);font-size:10px}.kpi b{display:block;font-size:21px;line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums}
+.row2{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(0,1.4fr);gap:16px}
+.donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center}
+.donut{position:relative;width:170px;height:170px;flex:none}
+.donut svg{width:100%;height:100%;transform:rotate(-90deg)}
+.donut-c{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.donut-c b{font-size:24px;line-height:1}.donut-c span{color:var(--muted);font-size:10px}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:10px;color:var(--muted)}
+.legend i{display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%}
+.chart svg{display:block;width:100%;height:auto}
+.empty{padding:22px 12px;color:var(--muted);text-align:center;font-size:11px}
+.tscroll{overflow:auto}
+table{width:100%;border-collapse:collapse;text-align:left}
+th{padding:9px 12px;color:var(--soft);font-size:11px;font-weight:600;border-bottom:1px solid var(--line2);white-space:nowrap}
+td{padding:11px 12px;border-bottom:1px solid var(--line);color:var(--soft);font-size:11px;white-space:nowrap}
+tbody tr:last-child td{border:0}tbody tr:hover td{background:#ffffff08}
+.person{display:flex;align-items:center;gap:9px}
+.avatar{display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:50%;background:#22d3ee1f;color:var(--cyan);font-size:9px;font-weight:700}
+.person b{font-weight:600;color:var(--ink)}.person small{display:block;color:var(--muted);font-size:9px}
+.dot{display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;background:var(--gray)}
+.dot.green{background:var(--green);box-shadow:0 0 8px var(--green)}.dot.orange{background:var(--orange)}
+.map-layout{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:14px}
+#team-map,#route-map{width:100%;height:430px;border-radius:14px;background:var(--card2)}
+.leaflet-container{font-family:Poppins,sans-serif}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--card2);color:var(--ink)}
+.map-list{max-height:430px;overflow:auto;border:1px solid var(--line);border-radius:14px}
+.map-person{display:flex;width:100%;align-items:center;gap:9px;padding:10px 12px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left}
+.map-person:hover,.map-person.selected{background:#22d3ee14}
+.map-person-main{flex:1;min-width:0}.map-person b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:600}.map-person small{color:var(--muted);font-size:9px}
+.keys{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;color:var(--muted);font-size:10px}
+.keys i{display:inline-block;width:8px;height:8px;margin-right:5px;border-radius:50%}
+.route-controls{display:flex;align-items:center;gap:10px;margin-top:12px}
+.route-controls input{flex:1;min-width:40px;accent-color:var(--cyan)}
+.route-time{min-width:48px;color:var(--muted);font-size:10px;font-variant-numeric:tabular-nums}
+.report-actions{display:flex;flex-wrap:wrap;gap:8px}
+.report-actions .btn{width:auto}
+.report-meta{display:flex;flex-wrap:wrap;gap:8px;margin:-2px 0 14px}
+.report-meta span{padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card2);color:var(--soft);font-size:10px}
+.report-title{display:none}
+.report-table{margin-top:12px}
+.report-table h3{margin:0 0 8px;font-size:11px;font-weight:600}
+@media print{
+ body,html,.app,.app::before,.app .body{background:#fff!important;color:#17213a!important}
+ .side,.top,.report-actions,.toast,.nav{display:none!important}
+ .app{display:block;padding:0;max-width:none}
+ .app .body{width:100%;margin:0;padding:0}
+ .page{display:none!important}
+ #report.page.active{display:block!important}
+ #report{border:0!important;box-shadow:none!important;padding:0!important}
+ #report .report-title{display:block}
+ #report .card{break-inside:avoid}
+ table,th,td{color:#17213a!important;border-color:#cbd2dd!important}
+}
+.toast{position:fixed;right:20px;bottom:20px;z-index:2000;max-width:380px;padding:12px 16px;border:1px solid var(--line2);border-radius:12px;background:var(--card2);color:var(--ink);font-size:11px;box-shadow:0 8px 30px #000a}
+.toast[hidden]{display:none}
+.page{display:none}.page.active{display:block}
+/* ---------- Sales tree ---------- */
+.tree{overflow:auto;padding-bottom:6px}
+.tree ul{list-style:none;margin:0;padding:0 0 0 26px}
+.tree>ul{padding-left:0}
+.tree li{position:relative;padding:7px 0 0 20px}
+.tree li::before{content:"";position:absolute;left:0;top:0;bottom:0;border-left:1px solid var(--line2)}
+.tree li::after{content:"";position:absolute;left:0;top:34px;width:18px;border-top:1px solid var(--line2)}
+.tree li:last-child::before{bottom:auto;height:34px}
+.tree>ul>li{padding-left:0}.tree>ul>li::before,.tree>ul>li::after{display:none}
+.node{position:relative;display:flex;align-items:center;gap:12px;flex-wrap:wrap;width:max-content;max-width:100%;min-width:300px;padding:10px 14px;border:1px solid var(--line2);border-radius:14px;background:var(--card2);transition:.15s}
+.node:hover{border-color:var(--cyan);box-shadow:0 0 0 3px #22d3ee14;transform:translateX(2px)}
+.node.grp{background:linear-gradient(135deg,#22d3ee12,#8b5cf61a);border-color:#8b5cf666}
+.node.leaf{cursor:pointer}
+.node.sel{border-color:var(--cyan);box-shadow:0 0 0 3px #22d3ee22}
+.tg{display:grid;place-items:center;width:22px;height:22px;border:1px solid var(--line2);border-radius:7px;background:var(--card);color:var(--soft);font-size:11px;padding:0}
+.tg.sp{visibility:hidden}
+.nav-ic{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:11px;font-size:11px;font-weight:700;background:#22d3ee1f;color:var(--cyan)}
+.grp .nav-ic{background:linear-gradient(135deg,var(--violet),var(--cyan));color:#0b0f17;font-size:15px}
+.n-main{min-width:120px}.n-main b{display:block;font-size:12px;font-weight:600}.n-main small{display:block;color:var(--muted);font-size:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;background:var(--chip);color:var(--soft);font-size:10px;white-space:nowrap}
+.chip b{color:var(--ink);font-weight:600}.chip.g{background:#34d39926;color:var(--gt)}.chip.w{background:#fb923c26;color:var(--wt)}
+.open-team{height:26px;padding:0 10px;border:1px solid #8b5cf666;border-radius:8px;background:#8b5cf61a;color:var(--vt);font-size:10px;font-weight:600}
+.open-team:hover{background:#8b5cf63a}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.row2{grid-template-columns:1fr}}
+@media(max-width:820px){
+ .app{display:block;padding:10px}
+ .side{position:static;width:auto;height:auto;margin-bottom:12px;padding:12px}
+ .me{flex-direction:row;gap:10px;margin-bottom:10px;text-align:left}.avatar-lg{width:44px;height:44px;font-size:16px}.me b{margin:0}
+ .nav{display:flex;overflow:auto}.nav a{flex:none;padding:8px 11px}.side-foot{display:none}
+ .search input{width:100%}.search{flex:1 1 100%}.top h1{flex:1 1 100%}
+ .map-layout{grid-template-columns:1fr}#team-map,#route-map{height:52vh;min-height:300px}.map-list{max-height:190px}
+ .node{min-width:0;width:100%}.chips{margin-left:0}
+}
+@media(max-width:480px){.kpis{grid-template-columns:1fr}}
+/* ---- Light content area (sidebar stays dark) ---- */
+html,body{background:#e9ecf1!important;color:#27324a!important;overflow-x:hidden}
+.app{position:relative;isolation:isolate}
+.app::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:100vw;margin-left:-50vw;background:#e9ecf1;z-index:-1}
+.app .side{background:var(--side)!important;color:#e7ecf6!important}
+.app .side b{color:#e7ecf6!important}
+.app .body{--bg:#e9ecf1;--card:#fff;--card2:#f4f6f9;--ink:#27324a;--soft:#4a5670;--muted:#8791a4;--line:#edf0f4;--line2:#dde2ea;--chip:#27324a0d;--hov:#fafbfd;--topbg:#fffffff2;--gt:#1f7d5b;--wt:#b0561b;--vt:#6d4ad8;--cyan:#0e8fb0;color-scheme:light;background:transparent!important;color:var(--ink)!important}
+.app .body h1,.app .body h2,.app .body b{color:var(--ink)}
+.app .body .card{background:var(--card)!important;border:1px solid var(--line)!important;color:var(--ink)!important;box-shadow:0 2px 10px #27324a0d}
+.app .body .top{background:var(--topbg)!important;border:1px solid var(--line)!important}
+.app .body .kpi{background:var(--card2)!important;border:1px solid var(--line)!important}
+.app .body .kpi small,.app .body .muted,.app .body .keys,.app .body .legend,.app .body .person small,.app .body .n-main small{color:var(--muted)!important}
+.app .body .control{background:var(--card2)!important;color:var(--ink)!important;border:1px solid var(--line2)!important;box-shadow:none!important}
+.app .body .control option{background:#fff;color:#27324a}
+.app .body .btn:not(.ghost){background:linear-gradient(135deg,#0e8fb0,#6d4ad8)!important;color:#fff!important;border:0!important}
+.app .body .btn.ghost{background:var(--card2)!important;color:var(--ink)!important;border:1px solid var(--line2)!important}
+.app .body table,.app .body thead,.app .body tbody,.app .body tr{background:transparent!important}
+.app .body th{background:transparent!important;color:var(--ink)!important;border-bottom:1px solid var(--line2)!important}
+.app .body td{background:transparent!important;color:var(--soft)!important;border-bottom:1px solid var(--line)!important}
+.app .body tbody tr:hover td{background:var(--hov)!important}
+.app .body .node{background:var(--card2)!important;border:1px solid var(--line2)!important;color:var(--ink)!important}
+.app .body .node.grp{background:linear-gradient(135deg,#0e8fb012,#6d4ad81a),#fff!important;border-color:#6d4ad855!important}
+.app .body .map-list,.app .body .map-person{background:transparent!important;color:var(--ink)!important}
+.app .body .tg{background:var(--card)!important;color:var(--soft)!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="me"><div class="avatar-lg" aria-hidden="true">SM</div><b>Sales Manager</b><small>Team workspace</small></div>
+    <nav class="nav" aria-label="Dashboard navigation">
+      <a class="active" href="#overview"><i>▦</i>Dashboard</a>
+      <a href="#team"><i>⌥</i>Sales team</a>
+      <a href="#attendance"><i>◔</i>Attendance</a>
+      <a href="#live"><i>⌖</i>Live locations</a>
+      <a href="#route"><i>↗</i>Routes &amp; visits</a>
+      <a href="#report"><i>▤</i>Reports</a>
+    </nav>
+    <div class="side-foot">Sales Executive App</div>
+  </aside>
+
+  <div class="body">
+    <header class="top">
+      <h1 id="crumb">Team update</h1>
+      <div class="search"><input class="control" id="search" type="search" placeholder="Search salesperson / team" aria-label="Search salesperson"></div>
+      <input class="control" id="date-filter" type="date" aria-label="Filter by date">
+      <select class="control" id="team-filter" aria-label="Filter by team"><option value="">All teams</option></select>
+      <select class="control" id="employee-filter" aria-label="Filter by salesperson"><option value="">All salespeople</option></select>
+      <select class="control" id="item-filter" aria-label="Filter by item"><option value="">All items</option></select>
+      <button class="btn" id="refresh" type="button">Refresh</button>
+    </header>
+
+    <section id="overview" class="page active">
+      <div class="card">
+        <div class="card-head"><h2>Overview <span class="muted" id="overview-date"></span></h2><span class="pill" id="live-status">Updating</span></div>
+        <div class="kpis">
+          <div class="kpi"><span class="kpi-ic">♙</span><div><small>Team clocked in</small><b id="kpi-attendance">—</b></div></div>
+          <div class="kpi"><span class="kpi-ic">⌂</span><div><small id="visits-note">Shop visits</small><b id="kpi-visits">—</b></div></div>
+          <div class="kpi"><span class="kpi-ic">▣</span><div><small id="orders-note">Order quantity</small><b id="kpi-orders">—</b></div></div>
+          <div class="kpi"><span class="kpi-ic">↗</span><div><small>Distance travelled</small><b id="kpi-distance">—</b></div></div>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="card"><div class="card-head"><h2>Team status</h2></div>
+          <div class="donut-wrap"><div class="donut" id="donut"></div><div class="legend" id="donut-legend"></div></div></div>
+        <div class="card"><div class="card-head"><h2 id="chart-title">Order quantity by salesperson</h2></div><div class="chart" id="orders-chart"></div></div>
+      </div>
+    </section>
+
+    <section id="team" class="card page">
+      <div class="card-head"><div><h2>Sales team hierarchy</h2><span class="muted">Sales Person tree · employee link vazhiya live data</span></div>
+        <div style="display:flex;gap:8px"><button class="btn ghost" id="expand-all" type="button">Expand all</button><button class="btn ghost" id="collapse-all" type="button">Collapse all</button></div></div>
+      <div class="tree" id="tree"></div>
+      <div class="keys"><span><i style="background:#8b5cf6"></i>Team / Manager</span><span><i style="background:#22d3ee"></i>Sales Person</span><span><i style="background:#34d399"></i>On duty</span><span>Salesperson click → route · "Open team" → team filter</span></div>
+    </section>
+
+    <section id="attendance" class="card page">
+      <div class="card-head"><h2>Attendance &amp; sales activity</h2><span class="muted">Filters above apply here</span></div>
+      <div class="tscroll"><table><thead><tr><th>Salesperson</th><th>Status</th><th>Clock in</th><th>Clock out</th><th>Visits</th><th>Order qty</th></tr></thead><tbody id="team-rows"></tbody></table></div>
+    </section>
+
+    <section id="live" class="card page">
+      <div class="card-head"><h2>Live locations</h2><span class="muted">Last recorded position on the selected date</span></div>
+      <div class="map-layout"><div id="team-map" aria-label="Live locations of sales executives"></div><div class="map-list" id="people-list"></div></div>
+      <div class="keys"><span><i style="background:#34d399"></i>On duty</span><span><i style="background:#fb923c"></i>GPS inactive</span><span><i style="background:#7d8aa3"></i>Not started or ended</span></div>
+    </section>
+
+    <section id="route" class="card page">
+      <div class="card-head"><div><h2 id="route-title">Selected salesperson route</h2><span class="muted" id="route-distance">—</span></div><button class="btn" id="play-route" type="button">▶ Play route</button></div>
+      <div id="route-map" aria-label="Selected salesperson route and shop visits"></div>
+      <div class="route-controls"><span class="route-time" id="route-clock">—</span><input id="route-slider" type="range" min="0" max="0" step="any" value="0" aria-label="Route playback position"><span class="route-time" id="route-end">—</span></div>
+      <div class="keys"><span><i style="background:#34d399"></i>Start</span><span><i style="background:#22d3ee"></i>Travel route</span><span><i style="background:#fb923c"></i>Shop visit</span><span><i style="background:#f87171"></i>End or suspicious</span></div>
+      <div class="tscroll" style="margin-top:14px"><table><thead><tr><th>Stop</th><th>Shop</th><th>Check in</th><th>Check out</th><th>Order qty</th><th>Review</th></tr></thead><tbody id="visit-rows"></tbody></table></div>
+    </section>
+
+    <section id="report" class="card page">
+      <div class="card-head">
+        <div><h2>Daily sales report</h2><span class="muted">Attendance, visits, orders and travel for selected filters</span></div>
+        <div class="report-actions">
+          <button class="btn ghost" id="export-report" type="button">Export Excel</button>
+          <button class="btn" id="print-report" type="button">Print / Save PDF</button>
+        </div>
+      </div>
+      <h1 class="report-title">Sales Executive · Daily Report</h1>
+      <div class="report-meta" id="report-meta"></div>
+      <div class="tscroll"><table><thead><tr><th>Salesperson</th><th>Status</th><th>Clock in</th><th>Clock out</th><th>Working hours</th><th>Visits</th><th>Order qty</th><th>Travel (km)</th></tr></thead><tbody id="report-rows"></tbody></table></div>
+      <div class="report-table">
+        <h3>Visit details</h3>
+        <div class="tscroll"><table><thead><tr><th>Salesperson</th><th>Shop</th><th>Check in</th><th>Check out</th><th>Order qty</th><th>Items</th><th>Review</th></tr></thead><tbody id="report-visits"></tbody></table></div>
+      </div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+"use strict";
+const API = "/api/method/sales_executive_app.api.";
+const $ = id => document.getElementById(id);
+const today = new Date();
+const dateString = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const state = { date: dateString(today), employee: "", item: "", team: "", q: "", employees: [], tree: [], nodes: new Map(), collapsed: new Set(), routeData: null, maps: {}, layers: {}, playback: null, frame: null, startedAt: null, requestId: 0, routeRequestId: 0 };
+const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const time = v => { if (!v) return "—"; const d = new Date(String(v).replace(" ","T")); return Number.isNaN(d.getTime()) ? String(v).slice(11,16) : d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); };
+const coords = o => { const la = Number(o && o.latitude), lo = Number(o && o.longitude); return Number.isFinite(la) && Number.isFinite(lo) && la >= -90 && la <= 90 && lo >= -180 && lo <= 180 && (la !== 0 || lo !== 0); };
+const initials = n => String(n || "?").trim().split(/\s+/).slice(0,2).map(p => p[0] || "").join("").toUpperCase();
+function toast(m){ const t=$("toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>{t.hidden=true},4500); }
+async function api(method, data = {}) {
+  const headers = {"Content-Type":"application/json","Accept":"application/json"};
+  const tk = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+  if (tk) headers["X-Frappe-CSRF-Token"] = decodeURIComponent(tk[1]);
+  const r = await fetch(API + method, {method:"POST", credentials:"same-origin", headers, body: JSON.stringify(data)});
+  let p = {}; try { p = await r.json(); } catch {}
+  if (!r.ok) { const e = new Error(p.message || "Could not load dashboard data."); e.status = r.status; throw e; }
+  return p.message;
+}
+const itemOf = (p, code) => (p.items || []).find(i => i.item === code);
+const empOf = code => state.employees.find(p => p.employee === code);
+
+/* ---------- Sales Person tree ---------- */
+function buildTree() {
+  const map = new Map();
+  for (const r of state.tree) map.set(r.name, {...r, label: r.sales_person_name || r.name, children: []});
+  const roots = [];
+  for (const n of map.values()) { const par = map.get(n.parent_sales_person); (par ? par.children : roots).push(n); }
+  const sortKids = n => { n.children.sort((a, b) => (b.children.length > 0) - (a.children.length > 0) || a.label.localeCompare(b.label)); n.children.forEach(sortKids); };
+  roots.forEach(sortKids);
+  const calc = n => {
+    if (!n.children.length && !Number(n.is_group)) {
+      const p = n.employee ? empOf(n.employee) : null;
+      n.p = p; n.s = {members: 1, on: p && personStatus(p).color === "green" ? 1 : 0, visits: p ? Number(p.shops_visited || 0) : 0, qty: p ? Number(p.order_qty || 0) : 0};
+    } else {
+      n.s = {members: 0, on: 0, visits: 0, qty: 0};
+      for (const c of n.children) { calc(c); for (const k in n.s) n.s[k] += c.s[k]; }
+    }
+  };
+  roots.forEach(calc);
+  state.nodes = map;
+  return roots;
+}
+const isGroup = n => n.children.length > 0 || Number(n.is_group);
+function teamEmployees(name) {
+  const out = new Set(), walk = n => { if (!isGroup(n)) { if (n.employee) out.add(n.employee); } else n.children.forEach(walk); };
+  const n = state.nodes.get(name); if (n) walk(n);
+  return out;
+}
+function scoped() {
+  if (!state.team) return state.employees;
+  const set = teamEmployees(state.team);
+  return state.employees.filter(p => set.has(p.employee));
+}
+function fillTeams() {
+  const sel = $("team-filter"), opts = [];
+  const walk = (n, d) => { if (isGroup(n)) { opts.push(`<option value="${esc(n.name)}">${"— ".repeat(d)}${esc(n.label)}</option>`); n.children.forEach(c => walk(c, d + 1)); } };
+  buildTree().forEach(r => walk(r, 0));
+  sel.innerHTML = `<option value="">All teams</option>${opts.join("")}`;
+  if (state.nodes.has(state.team)) sel.value = state.team; else state.team = sel.value = "";
+}
+function nodeHTML(n, q) {
+  const self = !q || n.label.toLowerCase().includes(q) || String(n.employee_name || n.employee || "").toLowerCase().includes(q);
+  const kids = n.children.map(c => nodeHTML(c, self ? "" : q)).join("");
+  if (q && !self && !kids) return "";
+  const grp = isGroup(n), open = q || !state.collapsed.has(n.name), s = n.s;
+  let chips, sub;
+  if (grp) {
+    sub = `Team · ${n.children.length} direct`;
+    chips = `<span class="chip"><b>${s.members}</b> salespeople</span><span class="chip g"><b>${s.on}</b> on duty</span><span class="chip"><b>${s.visits}</b> visits</span><span class="chip"><b>${s.qty.toLocaleString()}</b> qty</span>`;
+  } else if (!n.employee) {
+    sub = "Sales Person"; chips = `<span class="chip w">Employee link illa</span>`;
+  } else if (!n.p) {
+    sub = esc(n.employee); chips = `<span class="chip">No data for this date</span>`;
+  } else {
+    const st = personStatus(n.p);
+    sub = esc(n.employee);
+    chips = `<span class="chip ${st.color === "green" ? "g" : ""}"><i class="dot ${esc(st.color)}" style="margin:0"></i>${esc(st.text)}</span><span class="chip">In <b>${esc(time(n.p.clock_in))}</b></span><span class="chip"><b>${s.visits}</b> visits</span><span class="chip"><b>${s.qty.toLocaleString()}</b> qty</span>`;
+  }
+  const name = n.p ? (n.p.employee_name || n.label) : n.label;
+  return `<li><div class="node ${grp ? "grp" : "leaf"} ${n.employee && n.employee === state.employee ? "sel" : ""}" data-node="${esc(n.name)}" ${grp ? "" : `data-emp="${esc(n.employee || "")}"`}>
+    <button class="tg ${grp && n.children.length ? "" : "sp"}" type="button" data-toggle="${esc(n.name)}" aria-label="Toggle">${open ? "▾" : "▸"}</button>
+    <span class="nav-ic">${grp ? "⌥" : esc(initials(name))}</span>
+    <span class="n-main"><b>${esc(n.label)}</b><small>${sub}</small></span>
+    <span class="chips">${chips}</span>${grp ? `<button class="open-team" type="button" data-team="${esc(n.name)}">Open team ›</button>` : ""}</div>${kids && open ? `<ul>${kids}</ul>` : ""}</li>`;
+}
+function renderTree() {
+  const host = $("tree");
+  if (!state.tree.length) { host.innerHTML = '<div class="empty">Sales Person tree data kidaikkala. Backend API (get_sales_person_tree) check pannunga.</div>'; return; }
+  const roots = buildTree(), q = state.q.trim().toLowerCase();
+  host.innerHTML = `<ul>${roots.map(n => nodeHTML(n, q)).join("")}</ul>` || "";
+  if (!host.textContent.trim()) host.innerHTML = '<div class="empty">Search-ku match aana team / salesperson illa.</div>';
+}
+
+/* ---------- Filters & overview ---------- */
+function filteredEmployees() {
+  const q = state.q.trim().toLowerCase();
+  return scoped().filter(p => (!state.employee || p.employee === state.employee)
+    && (!state.item || itemOf(p, state.item))
+    && (!q || String(p.employee_name || p.employee).toLowerCase().includes(q)));
+}
+const selectedEmployee = () => scoped().find(p => p.employee === state.employee) || scoped()[0] || null;
+function fillFilters() {
+  const sel = state.employee, es = $("employee-filter"), pool = scoped();
+  es.innerHTML = `<option value="">All salespeople</option>${pool.map(p => `<option value="${esc(p.employee)}">${esc(p.employee_name || p.employee)}</option>`).join("")}`;
+  if (pool.some(p => p.employee === sel)) es.value = sel; else state.employee = es.value = "";
+  const names = new Map();
+  for (const p of pool.filter(p => !state.employee || p.employee === state.employee))
+    for (const i of p.items || []) if (i.item) names.set(i.item, i.item_name || i.item);
+  if (!names.has(state.item)) state.item = "";
+  $("item-filter").innerHTML = `<option value="">All items</option>${[...names.entries()].sort((a,b)=>a[1].localeCompare(b[1])).map(([c,n]) => `<option value="${esc(c)}">${esc(n)}</option>`).join("")}`;
+  $("item-filter").value = state.item;
+}
+function personStatus(p) {
+  if (p.status) return {text:p.status, color:p.color || "grey"};
+  if (p.clock_in && !p.clock_out) return {text:"On duty", color:"green"};
+  return p.clock_in ? {text:"Day ended", color:"grey"} : {text:"Not started", color:"grey"};
+}
+function renderDonut(people) {
+  const parts = [["On duty","#34d399",0],["GPS inactive","#fb923c",0],["Day ended","#8b5cf6",0],["Not started","#46526b",0]];
+  for (const p of people) {
+    const s = personStatus(p);
+    parts[s.color === "green" ? 0 : s.color === "orange" ? 1 : s.text === "Day ended" ? 2 : 3][2]++;
+  }
+  const total = parts.reduce((a, x) => a + x[2], 0), r = 60, c = 2 * Math.PI * r;
+  let offset = 0;
+  const arcs = total ? parts.filter(x => x[2]).map(x => {
+    const len = c * x[2] / total, el = `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${x[1]}" stroke-width="22" stroke-dasharray="${len} ${c - len}" stroke-dashoffset="${-offset}"><title>${x[0]}: ${x[2]}</title></circle>`;
+    offset += len; return el;
+  }).join("") : `<circle cx="80" cy="80" r="${r}" fill="none" stroke="#e4e8ee" stroke-width="22"/>`;
+  $("donut").innerHTML = `<svg viewBox="0 0 160 160" role="img" aria-label="Team status chart">${arcs}</svg><div class="donut-c"><b>${total}</b><span>salespeople</span></div>`;
+  $("donut-legend").innerHTML = parts.map(x => `<span><i style="background:${x[1]}"></i>${x[0]} (${x[2]})</span>`).join("");
+}
+function renderChart(rows) {
+  const node = $("orders-chart");
+  if (!rows.length) { node.innerHTML = '<div class="empty">No itemized orders for these filters.</div>'; return; }
+  const W = 560, H = 230, L = 34, B = 34, T = 12, max = Math.max(1, ...rows.map(r => r.value));
+  const step = (W - L) / rows.length, bw = Math.min(36, step * .58);
+  const grid = [0, .25, .5, .75, 1].map(f => { const y = T + (H - T - B) * (1 - f); return `<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="#e4e8ee"/><text x="${L - 6}" y="${y + 3}" text-anchor="end" fill="#7d8aa3" font-size="9">${Math.round(max * f).toLocaleString()}</text>`; }).join("");
+  const top = rows.reduce((a, r, i) => r.value > rows[a].value ? i : a, 0);
+  const bars = rows.map((r, i) => {
+    const h = (H - T - B) * r.value / max, x = L + i * step + (step - bw) / 2, y = H - B - h;
+    const label = r.label.length > 8 ? r.label.slice(0, 7) + "…" : r.label;
+    return `<g><title>${esc(r.label)}: ${r.value.toLocaleString()}</title><rect x="${x}" y="${y}" width="${bw}" height="${Math.max(h, r.value ? 2 : 0)}" rx="4" fill="${i === top ? "#22d3ee" : "#8b5cf6"}"/><text x="${x + bw / 2}" y="${H - B + 14}" text-anchor="middle" fill="#7d8aa3" font-size="9">${esc(label)}</text></g>`;
+  }).join("");
+  node.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Order quantity chart">${grid}${bars}</svg>`;
+}
+function renderOverview() {
+  const people = filteredEmployees(), selected = selectedEmployee();
+  const att = scoped().filter(p => !state.employee || p.employee === state.employee);
+  const visits = people.reduce((s, p) => s + (state.item ? Number((itemOf(p, state.item) || {}).visits || 0) : Number(p.shops_visited || 0)), 0);
+  const orders = people.reduce((s, p) => s + (state.item ? Number((itemOf(p, state.item) || {}).qty || 0) : Number(p.order_qty || 0)), 0);
+  $("overview-date").textContent = "· " + new Date(`${state.date}T12:00:00`).toLocaleDateString([], {weekday:"long", month:"long", day:"numeric", year:"numeric"});
+  $("kpi-attendance").textContent = `${att.filter(p => p.clock_in).length} / ${att.length}`;
+  $("kpi-visits").textContent = visits.toLocaleString();
+  $("kpi-orders").textContent = orders.toLocaleString();
+  $("visits-note").textContent = state.item ? "Visits with selected item" : "Shop visits";
+  $("orders-note").textContent = state.item ? "Units of selected item" : "Order quantity";
+  const dist = state.routeData && selected && state.routeData.selected_employee === selected.employee ? Number(state.routeData.km_travelled || 0) : 0;
+  $("kpi-distance").textContent = selected ? `${dist.toFixed(1)} km` : "—";
+  $("team-rows").innerHTML = people.length ? people.map(p => {
+    const s = personStatus(p), it = state.item ? itemOf(p, state.item) : null;
+    const v = state.item ? Number(it && it.visits || 0) : Number(p.shops_visited || 0);
+    const q = state.item ? Number(it && it.qty || 0) : Number(p.order_qty || 0);
+    return `<tr><td><div class="person"><span class="avatar">${esc(initials(p.employee_name || p.employee))}</span><span><b>${esc(p.employee_name || p.employee)}</b><small>${esc(p.employee)}</small></span></div></td><td><span class="dot ${esc(s.color)}"></span>${esc(s.text)}</td><td>${esc(time(p.clock_in))}</td><td>${esc(time(p.clock_out))}</td><td>${v.toLocaleString()}</td><td>${q.toLocaleString()}</td></tr>`;
+  }).join("") : '<tr><td colspan="6"><div class="empty">No team activity for these filters.</div></td></tr>';
+  $("chart-title").textContent = state.item ? `${$("item-filter").selectedOptions[0].textContent} by salesperson` : "Order quantity by salesperson";
+  renderDonut(att);
+  renderChart(people.map(p => ({label: p.employee_name || p.employee, value: state.item ? Number((itemOf(p, state.item) || {}).qty || 0) : Number(p.order_qty || 0)})));
+  $("route-title").textContent = `${selected ? (selected.employee_name || selected.employee) : "Select a salesperson"} · route`;
+  $("route-distance").textContent = state.routeData ? `${Number(state.routeData.km_travelled || 0).toFixed(1)} km travelled` : "—";
+  renderTree();
+  renderReport();
+}
+
+function getReportData() {
+  const rows = filteredEmployees().map(p => {
+    const selectedItem = state.item ? itemOf(p, state.item) : null;
+    const visits = (p.visits || []).filter(v => !state.item
+      || (v.details || []).some(detail => detail.item === state.item));
+    return {
+      person: p.employee_name || p.employee,
+      employee: p.employee,
+      status: personStatus(p).text,
+      clockIn: p.clock_in,
+      clockOut: p.clock_out,
+      hours: Number(p.working_hours || 0),
+      visits: state.item ? Number(selectedItem && selectedItem.visits || visits.length) : Number(p.shops_visited || 0),
+      qty: state.item ? Number(selectedItem && selectedItem.qty || 0) : Number(p.order_qty || 0),
+      km: Number(p.km_travelled || 0),
+      visitRows: visits.map(v => ({
+        person: p.employee_name || p.employee,
+        shop: v.customer_name || v.customer || "—",
+        checkIn: v.check_in_time,
+        checkOut: v.check_out_time,
+        qty: Number(v.order_qty || 0),
+        items: (v.details || [])
+          .filter(detail => !state.item || detail.item === state.item)
+          .map(detail => `${detail.item_name || detail.item}: ${Number(detail.qty || 0).toLocaleString()}`)
+          .join(", ") || "—",
+        review: Number(v.is_suspicious) ? "Review" : "—",
+      })),
+    };
+  });
+  return {rows, visits: rows.flatMap(row => row.visitRows)};
+}
+function renderReport() {
+  const {rows, visits} = getReportData();
+  const labels = ["team-filter", "employee-filter", "item-filter"]
+    .map(id => $(id).selectedOptions[0]?.textContent || "");
+  const dateLabel = new Date(`${state.date}T12:00:00`).toLocaleDateString([], {
+    weekday:"long", year:"numeric", month:"long", day:"numeric",
+  });
+  $("report-meta").innerHTML = [dateLabel, ...labels].map(value => `<span>${esc(value)}</span>`).join("");
+  $("report-rows").innerHTML = rows.length ? rows.map(row =>
+    `<tr><td>${esc(row.person)}</td><td>${esc(row.status)}</td><td>${esc(time(row.clockIn))}</td><td>${esc(time(row.clockOut))}</td><td>${row.hours.toFixed(2)}</td><td>${row.visits.toLocaleString()}</td><td>${row.qty.toLocaleString()}</td><td>${row.km.toFixed(2)}</td></tr>`
+  ).join("") : '<tr><td colspan="8"><div class="empty">No activity for the selected filters.</div></td></tr>';
+  $("report-visits").innerHTML = visits.length ? visits.map(row =>
+    `<tr><td>${esc(row.person)}</td><td>${esc(row.shop)}</td><td>${esc(time(row.checkIn))}</td><td>${esc(time(row.checkOut))}</td><td>${row.qty.toLocaleString()}</td><td>${esc(row.items)}</td><td>${esc(row.review)}</td></tr>`
+  ).join("") : '<tr><td colspan="7"><div class="empty">No shop visits for the selected filters.</div></td></tr>';
+}
+function exportReport() {
+  const {rows, visits} = getReportData();
+  const data = [
+    ["Daily Sales Report", state.date],
+    [],
+    ["Salesperson", "Employee", "Status", "Clock in", "Clock out", "Working hours", "Visits", "Order qty", "Travel (km)"],
+    ...rows.map(row => [row.person, row.employee, row.status, time(row.clockIn), time(row.clockOut), row.hours.toFixed(2), row.visits, row.qty, row.km.toFixed(2)]),
+    [],
+    ["Visit Details"],
+    ["Salesperson", "Shop", "Check in", "Check out", "Order qty", "Items", "Review"],
+    ...visits.map(row => [row.person, row.shop, time(row.checkIn), time(row.checkOut), row.qty, row.items, row.review]),
+  ];
+  const csv = data.map(row => row.map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF", csv], {type:"text/csv;charset=utf-8"}));
+  const link = document.createElement("a");
+  link.href = url; link.download = `sales-report-${state.date}.csv`;
+  document.body.appendChild(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ---------- Maps ---------- */
+function leafletMap(id) {
+  if (typeof L === "undefined") throw new Error("Map could not load. Check your connection.");
+  if (!state.maps[id]) {
+    state.maps[id] = L.map(id).setView([11.0, 77.0], 8);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(state.maps[id]);
+    state.layers[id] = L.featureGroup().addTo(state.maps[id]);
+  } else state.maps[id].invalidateSize();
+  return state.maps[id];
+}
+function icon(label, color, size = 28) {
+  return L.divIcon({className:"", html:`<span style="display:grid;width:${size}px;height:${size}px;place-items:center;border:2px solid #ffffff;border-radius:50%;background:${color};box-shadow:0 0 12px ${color}88;color:#ffffff;font:700 9px Poppins,sans-serif">${esc(label)}</span>`, iconSize:[size,size], iconAnchor:[size/2,size/2]});
+}
+function fitPoints(map, pts) { if (pts.length > 1) map.fitBounds(L.latLngBounds(pts), {padding:[30,30], maxZoom:15}); else if (pts.length) map.setView(pts[0], 14); }
+function selectEmployee(code) {
+  state.employee = code; fillFilters(); renderOverview(); drawTeamMap(); reloadRoute();
+}
+function renderPeopleList(people) {
+  const node = $("people-list");
+  node.innerHTML = people.length ? people.map(p => {
+    const s = personStatus(p), seen = p.last_location && p.last_location.timestamp;
+    return `<button class="map-person ${p.employee === state.employee ? "selected" : ""}" type="button" data-employee="${esc(p.employee)}"><span class="avatar">${esc(initials(p.employee_name || p.employee))}</span><span class="map-person-main"><b>${esc(p.employee_name || p.employee)}</b><small>${seen ? "Seen " + esc(time(seen)) : "No location recorded"}</small></span><i class="dot ${esc(s.color)}" title="${esc(s.text)}"></i></button>`;
+  }).join("") : '<div class="empty">No salespeople found.</div>';
+  node.querySelectorAll("[data-employee]").forEach(b => b.addEventListener("click", () => selectEmployee(b.dataset.employee)));
+}
+function drawTeamMap() {
+  if (!state.employees.length) return;
+  try {
+    const map = leafletMap("team-map"), layer = state.layers["team-map"]; layer.clearLayers();
+    const pts = [];
+    for (const p of scoped().filter(p => !state.employee || p.employee === state.employee)) {
+      const loc = p.last_location; if (!coords(loc || {})) continue;
+      const pt = [Number(loc.latitude), Number(loc.longitude)]; pts.push(pt);
+      const s = personStatus(p), color = s.color === "green" ? "#34d399" : s.color === "orange" ? "#fb923c" : "#7d8aa3";
+      layer.addLayer(L.marker(pt, {icon: icon(initials(p.employee_name || p.employee), color)}).bindPopup(`<b>${esc(p.employee_name || p.employee)}</b><br>${esc(s.text)}<br><small>${esc(loc.timestamp || "Location time unavailable")}</small>`));
+    }
+    fitPoints(map, pts); renderPeopleList(scoped());
+  } catch (e) { toast(e.message); }
+}
+function clearRoutePlayback() {
+  if (state.frame) cancelAnimationFrame(state.frame);
+  state.frame = null; state.startedAt = null; state.playback = null;
+  $("play-route").textContent = "▶ Play route"; $("route-slider").value = 0; $("route-slider").max = 0;
+  $("route-clock").textContent = "—"; $("route-end").textContent = "—";
+}
+function drawRoute() {
+  clearRoutePlayback();
+  const map = leafletMap("route-map"), layer = state.layers["route-map"]; layer.clearLayers();
+  const data = state.routeData; if (!data) return;
+  const points = (data.route || []).filter(coords).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const path = points.map(p => [Number(p.latitude), Number(p.longitude)]), bounds = path.slice();
+  if (path.length > 1) {
+    const cap = {lineCap:"round", lineJoin:"round", interactive:false};
+    layer.addLayer(L.polyline(path, {color:"#ffffff", weight:10, opacity:.9, ...cap}));
+    layer.addLayer(L.polyline(path, {color:"#22d3ee", weight:5, opacity:.35, ...cap}));
+    const progress = L.polyline([path[0]], {color:"#22d3ee", weight:5, opacity:1, ...cap}).addTo(layer);
+    const marker = L.marker(path[0], {icon: icon("●", "#8b5cf6", 30), zIndexOffset:500}).addTo(layer);
+    state.playback = {points, path, progress, marker, index:0};
+    $("route-slider").max = String(points.length - 1);
+    $("route-end").textContent = time(points[points.length - 1].timestamp);
+    seekRoute(points.length - 1);
+  }
+  const visits = data.visits || [];
+  visits.forEach((v, i) => {
+    if (!coords(v)) return;
+    const pt = [Number(v.latitude), Number(v.longitude)]; bounds.push(pt);
+    layer.addLayer(L.marker(pt, {icon: icon(String(i + 1), Number(v.is_suspicious) ? "#f87171" : "#fb923c")}).bindPopup(`<b>${esc(v.customer_name || v.customer || "Shop visit")}</b><br>${esc(time(v.check_in_time))} · ${Number(v.order_qty || 0).toLocaleString()} units${Number(v.is_suspicious) ? "<br><strong>Suspicious visit</strong>" : ""}`));
+  });
+  if (path.length) {
+    layer.addLayer(L.marker(path[0], {icon: icon("START", "#34d399", 40), zIndexOffset:700}).bindPopup(`<b>Journey started</b><br>${esc(time(points[0].timestamp))}`));
+    if (path.length > 1) layer.addLayer(L.marker(path[path.length - 1], {icon: icon("END", "#f87171", 36), zIndexOffset:700}).bindPopup(`<b>Last recorded location</b><br>${esc(time(points[points.length - 1].timestamp))}`));
+  } else $("route-clock").textContent = visits.length ? "No GPS trail · visits shown" : "No route recorded";
+  $("visit-rows").innerHTML = visits.length ? visits.map((v, i) => `<tr><td>${i + 1}</td><td>${esc(v.customer_name || v.customer || "—")}</td><td>${esc(time(v.check_in_time))}</td><td>${esc(time(v.check_out_time))}</td><td>${Number(v.order_qty || 0).toLocaleString()}</td><td>${Number(v.is_suspicious) ? "Review" : "—"}</td></tr>`).join("") : '<tr><td colspan="6"><div class="empty">No visits for this salesperson and date.</div></td></tr>';
+  fitPoints(map, bounds);
+}
+function seekRoute(value) {
+  const pb = state.playback; if (!pb) return;
+  const idx = Math.max(0, Math.min(Number(value), pb.points.length - 1)), s = Math.floor(idx), f = idx - s;
+  const a = pb.path[s], b = pb.path[Math.min(s + 1, pb.path.length - 1)];
+  const cur = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+  pb.index = idx; pb.marker.setLatLng(cur); pb.progress.setLatLngs(pb.path.slice(0, s + 1).concat([cur]));
+  $("route-slider").value = String(idx); $("route-clock").textContent = time(pb.points[s].timestamp);
+}
+function playbackFrame(ts) {
+  if (!state.playback || state.startedAt == null) return;
+  const end = state.playback.points.length - 1, prog = Math.min(1, (ts - state.startedAt) / 22000);
+  seekRoute(end * prog);
+  if (prog >= 1) { state.frame = null; state.startedAt = null; $("play-route").textContent = "▶ Play route"; }
+  else state.frame = requestAnimationFrame(playbackFrame);
+}
+function togglePlayback() {
+  if (!state.playback || state.playback.points.length < 2) return toast("No GPS route with at least two recorded locations is available.");
+  if (state.frame) { cancelAnimationFrame(state.frame); state.frame = null; state.startedAt = null; $("play-route").textContent = "▶ Play route"; return; }
+  if (state.playback.index >= state.playback.points.length - 1) seekRoute(0);
+  state.startedAt = performance.now() - (state.playback.index / (state.playback.points.length - 1)) * 22000;
+  $("play-route").textContent = "Ⅱ Pause route";
+  state.frame = requestAnimationFrame(playbackFrame);
+}
+function mergeLocations(data) {
+  const lp = new Map(((data && data.salespeople) || []).map(r => [r.employee, r]));
+  state.employees = state.employees.map(e => ({...lp.get(e.employee), ...e}));
+}
+async function reloadRoute() {
+  const id = ++state.routeRequestId, person = selectedEmployee();
+  if (!person) { state.routeData = null; drawRoute(); return; }
+  try {
+    const data = await api("get_map_view_data", {employee: person.employee, date: state.date});
+    if (id !== state.routeRequestId || selectedEmployee()?.employee !== person.employee) return;
+    state.routeData = data; mergeLocations(data);
+    renderOverview(); drawTeamMap(); drawRoute();
+  } catch (e) { toast(e.message); }
+}
+async function refresh() {
+  const id = ++state.requestId; $("refresh").disabled = true;
+  state.date = $("date-filter").value || dateString(today);
+  try {
+    const [dash, tree] = await Promise.all([
+      api("get_manager_dashboard", {date: state.date}),
+      api("get_sales_person_tree").catch(() => null)
+    ]);
+    if (id !== state.requestId) return;
+    state.employees = Array.isArray(dash) ? dash : [];
+    if (Array.isArray(tree)) state.tree = tree;
+    fillTeams(); fillFilters();
+    const sel = selectedEmployee();
+    const mapData = sel ? await api("get_map_view_data", {employee: sel.employee, date: state.date}) : null;
+    if (id !== state.requestId) return;
+    if (sel && selectedEmployee()?.employee === sel.employee) state.routeData = mapData;
+    mergeLocations(mapData);
+    $("live-status").textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+    $("live-status").className = "pill";
+    renderOverview(); drawTeamMap();
+    if (sel && selectedEmployee()?.employee === sel.employee) drawRoute(); else await reloadRoute();
+  } catch (e) {
+    if (id === state.requestId) {
+      $("live-status").textContent = "Data unavailable"; $("live-status").className = "pill off";
+      toast(e.status === 401 || e.status === 403 ? "Sign in with a manager account to view this dashboard." : e.message);
+    }
+  } finally { if (id === state.requestId) $("refresh").disabled = false; }
+}
+
+/* ---------- Events ---------- */
+$("date-filter").value = state.date; $("date-filter").max = state.date;
+$("date-filter").addEventListener("change", refresh);
+$("date-filter").addEventListener("click", event => {
+  const input = event.currentTarget;
+  if (typeof input.showPicker === "function") {
+    try { input.showPicker(); } catch {}
+  }
+});
+$("team-filter").addEventListener("change", async e => { state.team = e.target.value; fillFilters(); renderOverview(); drawTeamMap(); await reloadRoute(); });
+$("employee-filter").addEventListener("change", async e => { state.employee = e.target.value; fillFilters(); renderOverview(); drawTeamMap(); await reloadRoute(); });
+$("item-filter").addEventListener("change", e => { state.item = e.target.value; renderOverview(); });
+$("search").addEventListener("input", e => { state.q = e.target.value; renderOverview(); });
+$("refresh").addEventListener("click", refresh);
+$("expand-all").addEventListener("click", () => { state.collapsed.clear(); renderTree(); });
+$("collapse-all").addEventListener("click", () => { state.nodes.forEach(n => { if (n.children.length) state.collapsed.add(n.name); }); renderTree(); });
+$("tree").addEventListener("click", e => {
+  const tg = e.target.closest("[data-toggle]"), ot = e.target.closest("[data-team]"), leaf = e.target.closest(".node.leaf");
+  if (tg) { const k = tg.dataset.toggle; state.collapsed.has(k) ? state.collapsed.delete(k) : state.collapsed.add(k); renderTree(); return; }
+  if (ot) { state.team = ot.dataset.team; $("team-filter").value = state.team; fillFilters(); renderOverview(); drawTeamMap(); reloadRoute(); go("attendance"); return; }
+  if (leaf) {
+    if (!leaf.dataset.emp) return toast("Indha Sales Person-ku Employee link pannala.");
+    if (!empOf(leaf.dataset.emp)) return toast("Indha date-ku indha salesperson data illa.");
+    selectEmployee(leaf.dataset.emp); go("route");
+  } else {
+    const nd = e.target.closest(".node.grp"); if (nd) { const k = nd.dataset.node; state.collapsed.has(k) ? state.collapsed.delete(k) : state.collapsed.add(k); renderTree(); }
+  }
+});
+$("route-slider").addEventListener("input", e => {
+  if (state.frame) { cancelAnimationFrame(state.frame); state.frame = null; state.startedAt = null; $("play-route").textContent = "▶ Play route"; }
+  seekRoute(e.target.value);
+});
+$("play-route").addEventListener("click", togglePlayback);
+$("export-report").addEventListener("click", exportReport);
+$("print-report").addEventListener("click", () => {
+  go("report");
+  setTimeout(() => window.print(), 80);
+});
+const TITLES = {overview:"Team update", team:"Sales team", attendance:"Attendance", live:"Live locations", route:"Routes & visits", report:"Reports"};
+function showPage(name) {
+  if (!TITLES[name]) name = "overview";
+  document.querySelectorAll(".page").forEach(x => x.classList.toggle("active", x.id === name));
+  document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("active", a.getAttribute("href") === "#" + name));
+  $("crumb").textContent = TITLES[name];
+  window.scrollTo(0, 0);
+  setTimeout(() => {
+    Object.values(state.maps).forEach(m => m.invalidateSize());
+    if (name === "live") drawTeamMap();
+    if (name === "route") drawRoute();
+  }, 60);
+}
+function go(name) { history.replaceState(null, "", "#" + name); showPage(name); }
+document.querySelectorAll(".nav a").forEach(a => a.addEventListener("click", e => { e.preventDefault(); go(a.getAttribute("href").slice(1)); }));
+showPage(location.hash.slice(1));
+refresh();
+setInterval(() => { if (!document.hidden && !state.frame) refresh(); }, 60000);
+window.addEventListener("beforeunload", () => { if (state.frame) cancelAnimationFrame(state.frame); });
+})();
+</script>
+</body>
+</html>

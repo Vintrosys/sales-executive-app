@@ -5,6 +5,8 @@ app_description = "A sales management application for managing sales activities,
 app_email = "raji.frappe@gmail.com"
 app_license = "mit"
 
+page_renderer = ["sales_executive_app.pwa.SalesServiceWorkerPage"]
+
 # Apps
 # ------------------
 

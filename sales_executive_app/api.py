@@ -4,7 +4,7 @@ from datetime import timedelta
 from dateutil import parser as date_parser
 import frappe
 from frappe.defaults import get_user_default
-from frappe.utils import now_datetime, today, flt, cint, get_datetime
+from frappe.utils import now_datetime, today, flt, cint, get_datetime, getdate
 from frappe.utils.data import convert_utc_to_system_timezone
 from frappe.utils.file_manager import save_file
 
@@ -31,7 +31,18 @@ def get_employee_info():
         ["name", "employee_name", "department", "company", "user_id"],
         as_dict=True,
     )
-    return emp or {"name": emp_id, "employee_name": emp_id}
+    emp = emp or {"name": emp_id, "employee_name": emp_id}
+    sales_person = frappe.db.get_value(
+        "Sales Person",
+        {"employee": emp_id, "enabled": 1},
+        ["name", "sales_person_name"],
+        as_dict=True,
+    )
+    emp["sales_person"] = sales_person.name if sales_person else None
+    emp["sales_person_name"] = (
+        sales_person.sales_person_name if sales_person else None
+    )
+    return emp
 
 
 def is_manager():
@@ -194,6 +205,8 @@ def ping():
         "user": frappe.session.user,
         "employee": emp.get("name"),
         "employee_name": emp.get("employee_name") or emp.get("name"),
+        "sales_person": emp.get("sales_person"),
+        "sales_person_name": emp.get("sales_person_name"),
         "is_manager": is_manager(),
         "today": today(),
         "is_logged_in": True,
@@ -758,6 +771,8 @@ def today_status():
     return {
         "employee": emp,
         "employee_name": emp_info.get("employee_name") or emp,
+        "sales_person": emp_info.get("sales_person"),
+        "sales_person_name": emp_info.get("sales_person_name"),
         "date": d,
         "clock_in": cin,
         "clock_out": cout,
@@ -801,6 +816,8 @@ def get_daily_report(date=None):
     return {
         "report": rep,
         "employee_name": emp_info.get("employee_name") or emp,
+        "sales_person": emp_info.get("sales_person"),
+        "sales_person_name": emp_info.get("sales_person_name"),
         "date": d,
         "visits": visits,
     }
@@ -828,17 +845,42 @@ def get_past_reports(limit=30):
 
 
 @frappe.whitelist()
-def get_manager_dashboard():
+def get_manager_dashboard(date=None):
     if not is_manager():
         frappe.throw("Access restricted to managers")
 
-    d = today()
+    d = str(getdate(date)) if date else today()
     employees = frappe.get_all(
         "Employee",
         filters={"status": "Active"},
         fields=["name", "employee_name", "department", "user_id"],
         order_by="employee_name asc",
     )
+    visits_by_employee = {}
+    if employees:
+        visits = frappe.get_all(
+            "Shop Visit",
+            filters={"employee": ["in", [emp.name for emp in employees]], "visit_date": d},
+            fields=[
+                "name",
+                "employee",
+                "customer",
+                "order_qty",
+                "check_in_time",
+                "check_out_time",
+                "latitude",
+                "longitude",
+                "is_suspicious",
+                "remarks",
+            ],
+            order_by="employee asc, check_in_time asc",
+        )
+        attach_visit_item_details(visits)
+        for visit in visits:
+            visit["customer_name"] = frappe.db.get_value(
+                "Customer", visit.customer, "customer_name"
+            ) if visit.customer else None
+            visits_by_employee.setdefault(visit.employee, []).append(visit)
 
     data = []
     for emp in employees:
@@ -846,15 +888,29 @@ def get_manager_dashboard():
         cin = attendance["clock_in"]
         cout = attendance["clock_out"]
 
-        visits = frappe.get_all(
-            "Shop Visit",
-            filters={"employee": emp.name, "visit_date": d},
-            fields=["name", "order_qty", "check_in_time", "check_out_time"],
-        )
+        visits = visits_by_employee.get(emp.name, [])
+        item_totals = {}
+        for visit in visits:
+            visit_items = set()
+            for detail in visit.get("details", []):
+                item_code = detail.get("item")
+                if not item_code:
+                    continue
+                item = item_totals.setdefault(item_code, {
+                    "item": item_code,
+                    "item_name": detail.get("item_name") or item_code,
+                    "qty": 0,
+                    "visits": 0,
+                })
+                item["qty"] += flt(detail.get("qty"))
+                visit_items.add(item_code)
+            for item_code in visit_items:
+                item_totals[item_code]["visits"] += 1
+
         last_loc = frappe.get_all(
             "Location Log",
             filters={"employee": emp.name, "timestamp": ["between", [d, d + " 23:59:59"]]},
-            fields=["latitude", "longitude", "timestamp", "battery"],
+            fields=["latitude", "longitude", "timestamp", "battery", "speed", "accuracy"],
             order_by="timestamp desc",
             limit=1,
         )
@@ -864,8 +920,12 @@ def get_manager_dashboard():
             "employee_name": emp.employee_name,
             "clock_in": cin,
             "clock_out": cout,
+            "working_hours": attendance["working_hours"],
             "shops_visited": len(visits),
             "order_qty": sum(flt(v.order_qty) for v in visits),
+            "km_travelled": calc_km(emp.name, d),
+            "visits": visits,
+            "items": sorted(item_totals.values(), key=lambda item: item["item_name"].lower()),
             "last_location": last_loc[0] if last_loc else None,
         })
 
@@ -874,8 +934,8 @@ def get_manager_dashboard():
 
 @frappe.whitelist()
 def get_map_view_data(employee=None, date=None, territory=None):
-    current_emp = get_employee()
     is_mgr = is_manager()
+    current_emp = None if is_mgr else get_employee()
 
     target_emp = employee if (is_mgr and employee) else current_emp
     d = date or today()
@@ -888,6 +948,15 @@ def get_map_view_data(employee=None, date=None, territory=None):
         fields=["name", "employee_name", "department"],
         order_by="employee_name asc",
     )
+    sales_persons = frappe.get_all(
+        "Sales Person",
+        filters={
+            "enabled": 1,
+            "employee": ["in", [emp.name for emp in emp_list]],
+        },
+        fields=["name", "sales_person_name", "employee"],
+    ) if emp_list else []
+    sales_person_by_employee = {person.employee: person for person in sales_persons}
     for emp in emp_list:
         attendance = summarize_attendance(get_attendance_checkins(emp.name, d))
         cin = attendance["clock_in"]
@@ -928,9 +997,14 @@ def get_map_view_data(employee=None, date=None, territory=None):
         if last_loc:
             last_updated_time = str(last_loc[0].timestamp)
 
+        sales_person = sales_person_by_employee.get(emp.name)
         employees_data.append({
             "employee": emp.name,
             "employee_name": emp.employee_name or emp.name,
+            "sales_person": sales_person.name if sales_person else None,
+            "sales_person_name": (
+                sales_person.sales_person_name if sales_person else None
+            ),
             "status": status,
             "color": color,
             "clock_in": str(cin) if cin else None,
@@ -1018,3 +1092,7 @@ def get_map_view_data(employee=None, date=None, territory=None):
         "shops": valid_shops,
         "km_travelled": km,
     }
+
+@frappe.whitelist()
+def get_sales_person_tree():
+    return frappe.get_all("Sales Person", fields=["name", "sales_person_name", "parent_sales_person", "is_group", "employee", "enabled"], filters={"enabled": 1}, order_by="lft")

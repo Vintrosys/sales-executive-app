@@ -1,0 +1,32 @@
+{
+  "id": "/sales",
+  "name": "Sales Executive",
+  "short_name": "Sales",
+  "description": "Sales visits, orders, customers, and field activity.",
+  "start_url": "/sales",
+  "scope": "/sales",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F2F4F9",
+  "theme_color": "#3346D3",
+  "icons": [
+    {
+      "src": "/assets/sales_executive_app/icons/sales-pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/sales_executive_app/icons/sales-pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/sales_executive_app/icons/sales-pwa.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

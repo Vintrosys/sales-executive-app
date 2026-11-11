@@ -1,7 +1,7 @@
 {
  "app": "sales_executive_app",
  "charts": [],
- "content": "[{\"id\":\"sales-executive-app-shortcut\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales\",\"col\":4}},{\"id\":\"sales-executive-records-header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Sales Executive Records</b></span>\",\"col\":12}},{\"id\":\"sales-executive-records-card\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Executive Records\",\"col\":4}}]",
+ "content": "[{\"id\":\"sales-executive-app-shortcut\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales\",\"col\":4}},{\"id\":\"manager-dashboard-shortcut\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Manager Dashboard\",\"col\":4}},{\"id\":\"sales-executive-records-header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Sales Executive Records</b></span>\",\"col\":12}},{\"id\":\"sales-executive-records-card\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Executive Records\",\"col\":4}}]",
  "creation": "2026-10-28 11:12:22.768121",
  "custom_blocks": [],
  "docstatus": 0,
@@ -72,6 +72,12 @@
    "label": "Sales",
    "type": "URL",
    "url": "/sales"
+  },
+  {
+   "doc_view": "",
+   "label": "Manager Dashboard",
+   "type": "URL",
+   "url": "/manager_dashboard"
   }
  ],
  "title": "Sales Executive App",
