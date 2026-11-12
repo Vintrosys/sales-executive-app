@@ -6,6 +6,7 @@ app_email = "raji.frappe@gmail.com"
 app_license = "mit"
 
 page_renderer = ["sales_executive_app.pwa.SalesServiceWorkerPage"]
+app_include_js = "/assets/sales_executive_app/js/sales_executive_app.js"
 
 # Apps
 # ------------------

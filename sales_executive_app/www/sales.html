@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#F2F4F9">
+  <meta name="theme-color" content="#0B131F">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="/assets/sales_executive_app/manifest.webmanifest">
@@ -26,43 +26,43 @@
   <style>
     /* Layout: one 600px column for daily flows; the Map tab breaks out into a full-bleed stage with floating glass controls. */
     :root {
-      --ink: #0F1633;
-      --ink-2: #1B2556;
-      --indigo: #3346D3;
-      --indigo-600: #2A3BB8;
-      --indigo-50: #EEF0FD;
-      --indigo-100: #DDE2FB;
-      --mint: #0FA97A;
-      --mint-700: #087556;
-      --mint-50: #E5F6EF;
-      --mint-200: #B9E6D4;
-      --gold: #E99A14;
-      --gold-700: #8F5D08;
-      --gold-50: #FDF3DE;
-      --gold-200: #F4D48E;
-      --red: #E5484D;
-      --red-700: #B0262F;
-      --red-50: #FDECEC;
-      --red-200: #F5C2C4;
-      --bg: #F2F4F9;
+      --ink: #102A36;
+      --ink-2: #0B2538;
+      --indigo: #38BDF8;
+      --indigo-600: #0284A8;
+      --indigo-50: #E5F7FD;
+      --indigo-100: #BCEBFA;
+      --mint: #34D399;
+      --mint-700: #087A5A;
+      --mint-50: #E4F7EF;
+      --mint-200: #A9E5CB;
+      --gold: #FBBF24;
+      --gold-700: #9A5B00;
+      --gold-50: #FFF4D8;
+      --gold-200: #F2D18B;
+      --red: #FB7185;
+      --red-700: #B4233B;
+      --red-50: #FFF0F2;
+      --red-200: #F4BCC5;
+      --bg: #F1F5F9;
       --surface: #FFFFFF;
-      --surface-2: #F7F8FC;
-      --line: #E3E7F1;
-      --line-2: #CDD3E3;
-      --text: #0F1633;
-      --muted: #5A6380;
-      --faint: #959EB7;
+      --surface-2: #F8FAFC;
+      --line: #E2E8F0;
+      --line-2: #CBD5E1;
+      --text: #1E293B;
+      --muted: #64748B;
+      --faint: #94A3B8;
       --on-dark: #FFFFFF;
-      --on-dark-2: rgba(255, 255, 255, .66);
-      --glass: rgba(255, 255, 255, .9);
+      --on-dark-2: rgba(255, 255, 255, .76);
+      --glass: rgba(255, 255, 255, .94);
       --font: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
       --display: 'Bricolage Grotesque', 'Manrope', system-ui, sans-serif;
       --r-sm: 12px;
       --r-md: 16px;
       --r-lg: 22px;
       --r-xl: 28px;
-      --sh-float: 0 1px 2px rgba(15, 22, 51, .06), 0 14px 32px -14px rgba(15, 22, 51, .32);
-      --sh-pop: 0 2px 6px rgba(15, 22, 51, .08), 0 28px 56px -20px rgba(15, 22, 51, .45);
+      --sh-float: 0 2px 6px rgba(0, 0, 0, .24), 0 14px 32px -14px rgba(0, 0, 0, .46);
+      --sh-pop: 0 2px 8px rgba(0, 0, 0, .3), 0 28px 56px -20px rgba(0, 0, 0, .65);
       --hdr: 68px;
       --nav-h: 64px;
       --safe-b: env(safe-area-inset-bottom, 0px);
@@ -903,6 +903,162 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     }
+
+    /* ---------- Light mode + Cyan / Purple accents ---------- */
+    body { color-scheme: light; }
+    .app-header { background: rgba(255, 255, 255, .94); border-bottom-color: var(--line); }
+    .avatar, .consent-ic, .brand-mark {
+      background: linear-gradient(135deg, #38BDF8 0%, #6366F1 50%, #A855F7 100%);
+      box-shadow: 0 10px 24px -12px rgba(56, 189, 248, .48);
+    }
+    .avatar {
+      background: #0B131F;
+      color: #38BDF8;
+      border: 1px solid rgba(56, 189, 248, .4);
+      box-shadow: 0 0 18px rgba(56, 189, 248, .28);
+    }
+    .btn.primary { background: linear-gradient(180deg, #38BDF8, #1496D4); color: #071521; box-shadow: 0 10px 22px -12px rgba(56, 189, 248, .48), inset 0 1px 0 rgba(255, 255, 255, .55); }
+    .btn.success { background: linear-gradient(180deg, #34D399, #159B78); color: #071A16; }
+    .btn.ghost, .gps-chip, .icon-btn, .back-btn, .act, .past-row { background-color: var(--surface); color: var(--text); }
+    .btn.soft { background: var(--indigo-50); color: #075A75; }
+    .btn.primary, .btn.soft, .act-primary, .mini.primary {
+      background: #0B131F;
+      color: #38BDF8;
+      border-color: #0B131F;
+      box-shadow: 0 6px 16px -10px rgba(56, 189, 248, .7);
+    }
+    .btn.primary:hover, .btn.soft:hover, .act-primary:hover, .mini.primary:hover,
+    .panel .sec-head .btn.soft:hover {
+      background: #142238;
+      color: #7DD3FC;
+      border-color: #263B55;
+    }
+    .btn.white { background: #FFFFFF; color: #0B2538; }
+    .btn.glass { background: rgba(255, 255, 255, .72); color: var(--text); }
+    .app-header, .bnav { -webkit-backdrop-filter: blur(20px) saturate(1.35); backdrop-filter: blur(20px) saturate(1.35); }
+    .hero {
+      background:
+        radial-gradient(110% 80% at 100% 0%, rgba(56, 189, 248, .12) 0%, rgba(56, 189, 248, 0) 58%),
+        linear-gradient(160deg, #0B131F 0%, #102238 100%);
+      color: #F8FAFC;
+      border: 1px solid #1E293B;
+      box-shadow: 0 22px 44px -24px rgba(15, 22, 51, .5);
+    }
+    .hero-date, .hero-k, .shift-cell span { color: rgba(226, 232, 240, .72); }
+    .hero-pill { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .14); color: #7DD3FC; }
+    .shift { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .14); }
+    .shift-line { background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .42) 0 6px, transparent 6px 12px); }
+    .hero .btn.white[onclick="navigate('visit')"] {
+      background: #38BDF8;
+      color: #071521;
+      box-shadow: 0 10px 25px -12px rgba(56, 189, 248, .68), inset 0 1px 0 rgba(255, 255, 255, .48);
+    }
+    .hero .btn.glass-red { background: rgba(255, 255, 255, .08); color: #FFFFFF; border-color: rgba(255, 255, 255, .16); }
+    .hero .btn.glass-red svg { color: #FB7185; }
+    .live-visit { background: linear-gradient(135deg, #FFF4D8, #FFF9EA); color: #59400E; }
+    .stats .stat:nth-child(2) .stat-ic { background: #F3E8FF; color: #7E22CE; }
+    .skel { background: linear-gradient(90deg, #E5EDF2 0%, #F4F7F9 50%, #E5EDF2 100%); background-size: 200% 100%; }
+    .notice { color: var(--text); }
+    .proof, .proof-ic, .stepper, .bnav, .seg, .mchip, .fab, .fab-group button, .layer-menu, .map-sheet {
+      background-color: var(--surface);
+      color: var(--text);
+      border-color: var(--line);
+    }
+    .layer-menu { background: rgba(255, 255, 255, .98); }
+    .bnav { background: rgba(255, 255, 255, .96); border-color: var(--line); }
+    .nav-tab.active { color: #075A75; }
+    .nav-fab.active { color: #0B131F; }
+    .nav-tab.active .ni { background: var(--indigo-50); color: #075A75; }
+    .fab-core { border-color: var(--surface); }
+    .nav-fab .fab-core {
+      border-radius: 50%;
+      background: #0B131F;
+      color: #38BDF8;
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, .3), 0 0 20px rgba(56, 189, 248, .42), inset 0 0 14px rgba(56, 189, 248, .12);
+    }
+    .nav-fab.active .fab-core {
+      background: #0B131F;
+      color: #7DD3FC;
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, .52), 0 0 26px rgba(56, 189, 248, .62), inset 0 0 18px rgba(56, 189, 248, .2);
+    }
+    .seg-ind { background: #0284A8; box-shadow: 0 8px 16px -8px rgba(56, 189, 248, .4); }
+    .seg button.on { color: #fff; }
+    .seg, .mchip, .fab, .fab-group { border-color: var(--line); }
+    .fab.on { background: #0284A8; color: #fff; }
+    .stepper button, .qty-big button { color: var(--text); }
+    .map-sheet { background: rgba(255, 255, 255, .97); border-color: var(--line); }
+    .map-stage, #leaflet-map { background: #EAF1F5; }
+    .ci-map { background: #EDF3F7; }
+    .ci-map .leaflet-control-attribution { background: rgba(255, 255, 255, .9); }
+    .ci-map .leaflet-control-attribution a { color: #075A75; }
+    .av-0, .av-1, .av-2, .av-3, .av-4, .av-5 { background: var(--indigo-50); color: #075A75; }
+    .av-1 { background: var(--mint-50); color: var(--mint-700); }
+    .av-2 { background: var(--gold-50); color: var(--gold-700); }
+    .av-3 { background: var(--red-50); color: var(--red-700); }
+    .av-green { background: #16856D; }
+    .av-orange { background: #A66B22; }
+    .av-grey { background: #53636A; }
+    .map-top .av, .map-sheet .av, .sx-pop .av {
+      background: #0B131F;
+      color: #38BDF8;
+      border: 1px solid rgba(56, 189, 248, .42);
+      box-shadow: 0 0 14px rgba(56, 189, 248, .24);
+    }
+    .input, input, textarea, select { color-scheme: light; }
+    :where(input:not([type=range]):not([type=checkbox]):not([type=radio]), textarea, select),
+    .search input:not([type=range]) { background-color: #FFFFFF; color: var(--text); border-color: var(--line-2); }
+    input::placeholder, textarea::placeholder { color: #718692; }
+    :where(input, textarea, select):focus, .qty-big:focus-within { box-shadow: 0 0 0 4px rgba(56, 189, 248, .2); }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23566B79' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    }
+    .proof { background: #EDF3F7; }
+    .proof-ic { background: #E5F7FD; }
+    .sticky-cta { background: linear-gradient(180deg, rgba(243, 247, 250, 0) 0%, var(--bg) 38%); }
+    .share-state, .consent-list li, .cust-info, .geo, .cart, .kpis div, .dg, .note-box {
+      background-color: var(--surface-2);
+      border-color: var(--line);
+      color: var(--text);
+    }
+    .geo--ok { background: #E4F7EF; border-color: #A9E5CB; }
+    .geo--far { background: #FFF0F2; border-color: #F4BCC5; }
+    .geo--warn { background: #FFF4D8; border-color: #F2D18B; }
+    .cat-row, .qty-big, .stepper { background-color: var(--surface); }
+    .cat-row.in { border-color: var(--indigo-100); }
+    .cat-add { background: var(--indigo-50); color: #075A75; }
+    .cat-row.in .cat-add { background: var(--indigo-600); color: #fff; }
+    #gen-sheet.visit-detail { background: rgba(15, 22, 51, .38); }
+    #gen-sheet.visit-detail .sheet {
+      background: linear-gradient(160deg, #FFFFFF, #F1F5F9 72%);
+      border: 1px solid #DCE6ED;
+      color: #1E293B;
+      box-shadow: 0 -18px 44px -12px rgba(15, 22, 51, .28), 0 0 20px rgba(56, 189, 248, .12);
+    }
+    #gen-sheet.visit-detail .sheet-grip { background: #38BDF8; }
+    #gen-sheet.visit-detail .sheet-head h3 { color: #0B2538; }
+    #gen-sheet.visit-detail .sheet-head p,
+    #gen-sheet.visit-detail .dg span { color: #64748B; }
+    #gen-sheet.visit-detail .x-btn {
+      background: #E5F7FD;
+      color: #075A75;
+      border: 1px solid #BCEBFA;
+    }
+    #gen-sheet.visit-detail .dg,
+    #gen-sheet.visit-detail .note-box {
+      background: #FFFFFF;
+      border-color: #DCE6ED;
+      color: #172C39;
+    }
+    #gen-sheet.visit-detail .field-label { color: #075A75; }
+    .live-tag { background: var(--mint-50); color: var(--mint-700); }
+    #toast { background: #102A36; color: #FFFFFF; }
+    #busy { background: rgba(16, 42, 54, .38); }
+    .busy-card, .login-card { background: var(--surface); color: var(--text); border-color: var(--line); }
+    .pop, .map-pop, .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+      color: var(--text);
+    }
+    .leaflet-control-attribution { background: rgba(255, 255, 255, .9); color: var(--muted); }
+    .leaflet-control-attribution a { color: #075A75; }
     
   </style>
 </head>
@@ -1207,14 +1363,16 @@
     }
 
     let sheetDone = null;
-    function openSheet(html, onClose) {
+    function openSheet(html, onClose, variant) {
       if (sheetDone) { const f = sheetDone; sheetDone = null; f(undefined); }
       $('gen-sheet-body').innerHTML = html;
+      $('gen-sheet').classList.toggle('visit-detail', variant === 'visit-detail');
       $('gen-sheet').classList.add('open');
       sheetDone = onClose || null;
     }
     function closeSheet(result) {
       $('gen-sheet').classList.remove('open');
+      $('gen-sheet').classList.remove('visit-detail');
       const f = sheetDone; sheetDone = null;
       if (f) f(result);
     }
@@ -2727,7 +2885,7 @@
         </div>
         ${(v.details || []).length ? `<div class="field-label">Ordered items</div><div class="note-box">${(v.details || []).map(item => `${esc(item.item_name || item.item)} · Quantity: ${esc(item.qty)} · Price: ${esc(item.price || 0)}`).join('<br>')}</div>` : ''}
         ${v.remarks ? `<div class="field-label">Notes</div><div class="note-box">${esc(v.remarks)}</div>` : ''}
-        ${isActive ? `<button class="btn primary lg" style="margin-top:14px" onclick="closeSheet();navigate('visit')">Resume visit</button>` : ''}`);
+        ${isActive ? `<button class="btn primary lg" style="margin-top:14px" onclick="closeSheet();navigate('visit')">Resume visit</button>` : ''}`, null, 'visit-detail');
     }
 
     // =================================================================
@@ -3514,7 +3672,7 @@
     });
 
     if ('serviceWorker' in navigator && window.isSecureContext) {
-      navigator.serviceWorker.register('/sales-worker.js', { scope: '/sales' })
+      navigator.serviceWorker.register('/sales-worker.js', { scope: '/' })
         .catch(error => console.error('Sales Executive PWA service worker registration failed:', error));
     }
 

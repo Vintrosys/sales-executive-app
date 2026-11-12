@@ -14,5 +14,5 @@ class SalesServiceWorkerPage(BaseRenderer):
         worker_path = Path(frappe.get_app_path("sales_executive_app", "www", "sales-worker.js"))
         response = Response(worker_path.read_bytes(), mimetype="application/javascript")
         response.headers["Cache-Control"] = "no-cache"
-        response.headers["Service-Worker-Allowed"] = "/sales"
+        response.headers["Service-Worker-Allowed"] = "/"
         return response
