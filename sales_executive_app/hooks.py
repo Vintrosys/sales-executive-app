@@ -11,6 +11,19 @@ app_include_js = "/assets/sales_executive_app/js/sales_executive_app.js"
 # Apps
 # ------------------
 
+
+app_logo_url = "/assets/sales_executive_app/images/logo.png"
+
+add_to_apps_screen = [
+    {
+        "name": "sales_executive_app",
+        "logo": "/assets/sales_executive_app/images/logo.png",
+        "title": "Sales Executive App",
+        "route": "/sales_executive_app"
+        # "has_permission": "sales_executive_app.api.permission.has_app_permission"
+    }
+]
+
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
