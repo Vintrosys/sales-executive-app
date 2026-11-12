@@ -281,5 +281,11 @@ fixtures = [
                 "custom_assigned_employee"
             ]],
         ],
+    },
+    {
+        "dt": "Workspace",
+        "filters": [
+            ["name", "=", "Sales Executive App"]
+        ],
     }
 ]
